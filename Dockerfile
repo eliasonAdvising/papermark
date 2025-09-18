@@ -31,18 +31,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Accept build arguments from Railway
-ARG DATABASE_URL
-ARG POSTGRES_PRISMA_URL
-ARG POSTGRES_PRISMA_URL_NON_POOLING
 ARG NEXTAUTH_URL
 ARG NEXT_PUBLIC_BASE_URL
 ARG NEXT_PUBLIC_WEBHOOK_BASE_HOST
 ARG NEXT_PUBLIC_APP_BASE_HOST
 
 # Set environment variables from build args
-ENV DATABASE_URL=${DATABASE_URL}
-ENV POSTGRES_PRISMA_URL=${POSTGRES_PRISMA_URL:-${DATABASE_URL}}
-ENV POSTGRES_PRISMA_URL_NON_POOLING=${POSTGRES_PRISMA_URL_NON_POOLING:-${DATABASE_URL}}
 ENV NEXTAUTH_URL=${NEXTAUTH_URL:-https://papermark-production-bbd1.up.railway.app}
 ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://papermark-production-bbd1.up.railway.app}
 ENV NEXT_PUBLIC_WEBHOOK_BASE_HOST=${NEXT_PUBLIC_WEBHOOK_BASE_HOST:-papermark-production-bbd1.up.railway.app}
@@ -52,21 +46,11 @@ ENV NEXT_PUBLIC_APP_BASE_HOST=${NEXT_PUBLIC_APP_BASE_HOST:-papermark-production-
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Generate Prisma client
+# Generate Prisma client (without database connection)
 RUN npx prisma generate
 
-# Debug: Show what database URL is being used
-RUN echo "DATABASE_URL is set: $(echo $DATABASE_URL | cut -c1-20)..."
-RUN echo "POSTGRES_PRISMA_URL is set: $(echo $POSTGRES_PRISMA_URL | cut -c1-20)..."
-
-# Deploy database migrations if database URL is available
-RUN if [ -n "$DATABASE_URL" ] && [ "$DATABASE_URL" != "" ] && [ "${DATABASE_URL#*postgresql://}" != "$DATABASE_URL" ]; then \
-        echo "Running database migrations..."; \
-        npx prisma migrate deploy; \
-    else \
-        echo "Skipping database migration - no valid PostgreSQL database URL provided"; \
-        echo "DATABASE_URL: $DATABASE_URL"; \
-    fi
+# Skip database migration during build - will handle at runtime
+RUN echo "Skipping database migration during build - will run at application startup"
 
 # Build the application
 RUN npm run build
@@ -87,6 +71,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
+# Copy package.json for runtime scripts
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+
 # Fix permissions
 RUN chown -R nextjs:nodejs /app
 
@@ -97,4 +84,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Create startup script that runs migrations then starts the app
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
