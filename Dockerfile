@@ -10,6 +10,7 @@ WORKDIR /app
 # Install dependencies
 FROM base AS deps
 COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
 RUN npm ci
 
 # Build the application
@@ -18,8 +19,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
+# Generate Prisma client (redundant but ensures it's generated)
 RUN npx prisma generate
 
 # Build Next.js application
