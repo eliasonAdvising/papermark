@@ -70,15 +70,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy built application with correct ownership
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Copy Prisma client and schema (needed for runtime)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-
-# Copy package.json for runtime scripts
+# Copy source files needed for runtime
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/pages ./pages
+COPY --from=builder --chown=nextjs:nodejs /app/app ./app
+COPY --from=builder --chown=nextjs:nodejs /app/components ./components
+COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
+COPY --from=builder --chown=nextjs:nodejs /app/styles ./styles
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
 
 # Fix permissions
 RUN chown -R nextjs:nodejs /app
@@ -91,4 +94,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Create startup script that runs migrations then starts the app
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
