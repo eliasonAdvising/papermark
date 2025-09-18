@@ -1,239 +1,55 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  pageExtensions: ["js", "jsx", "ts", "tsx", "mdx"],
-  images: {
-    minimumCacheTTL: 2592000, // 30 days
-    remotePatterns: prepareRemotePatterns(),
-  },
-  skipTrailingSlashRedirect: true,
-  assetPrefix:
-    process.env.NODE_ENV === "production" &&
-    process.env.VERCEL_ENV === "production"
-      ? process.env.NEXT_PUBLIC_BASE_URL
-      : undefined,
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/dashboard",
-        permanent: false,
-        has: [
-          {
-            type: "host",
-            value: process.env.NEXT_PUBLIC_APP_BASE_HOST,
-          },
-        ],
-      },
-      {
-        source: "/view/cm2xiaxzo000d147xszm9q72o",
-        destination: "/view/cm34cqqqx000212oekj9upn8o",
-        permanent: false,
-      },
-      {
-        source: "/view/cm5morpmg000btdwrlahi7f2y",
-        destination: "/view/cm68iygxd0005wuf5svbr6c1x",
-        permanent: false,
-      },
-      {
-        source: "/settings",
-        destination: "/settings/general",
-        permanent: false,
-      },
-    ];
-  },
-  async headers() {
-    const isDev = process.env.NODE_ENV === "development";
+# Use Node.js 20 Alpine as base image
+FROM node:20-alpine AS base
 
-    return [
-      {
-        // Default headers for all routes
-        source: "/:path*",
-        headers: [
-          {
-            key: "Referrer-Policy",
-            value: "no-referrer-when-downgrade",
-          },
-          {
-            key: "X-DNS-Prefetch-Control",
-            value: "on",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "SAMEORIGIN",
-          },
-          {
-            key: "Report-To",
-            value: JSON.stringify({
-              group: "csp-endpoint",
-              max_age: 10886400,
-              endpoints: [{ url: "/api/csp-report" }],
-            }),
-          },
-          {
-            key: "Content-Security-Policy-Report-Only",
-            value:
-              `default-src 'self' https: ${isDev ? "http:" : ""}; ` +
-              `script-src 'self' 'unsafe-inline' 'unsafe-eval' https: ${isDev ? "http:" : ""}; ` +
-              `style-src 'self' 'unsafe-inline' https: ${isDev ? "http:" : ""}; ` +
-              `img-src 'self' data: blob: https: ${isDev ? "http:" : ""}; ` +
-              `font-src 'self' data: https: ${isDev ? "http:" : ""}; ` +
-              `frame-ancestors 'none'; ` +
-              `connect-src 'self' https: ${isDev ? "http: ws: wss:" : ""}; ` + // Add WebSocket for hot reload
-              `${isDev ? "" : "upgrade-insecure-requests;"} ` +
-              "report-to csp-endpoint;",
-          },
-        ],
-      },
-      {
-        source: "/view/:path*",
-        headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex",
-          },
-        ],
-      },
-      {
-        // Embed routes - allow iframe embedding
-        source: "/view/:path*/embed",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value:
-              `default-src 'self' https: ${isDev ? "http:" : ""}; ` +
-              `script-src 'self' 'unsafe-inline' 'unsafe-eval' https: ${isDev ? "http:" : ""}; ` +
-              `style-src 'self' 'unsafe-inline' https: ${isDev ? "http:" : ""}; ` +
-              `img-src 'self' data: blob: https: ${isDev ? "http:" : ""}; ` +
-              `font-src 'self' data: https: ${isDev ? "http:" : ""}; ` +
-              "frame-ancestors *; " + // This allows iframe embedding
-              `connect-src 'self' https: ${isDev ? "http: ws: wss:" : ""}; ` + // Add WebSocket for hot reload
-              `${isDev ? "" : "upgrade-insecure-requests;"}`,
-          },
-          {
-            key: "X-Robots-Tag",
-            value: "noindex",
-          },
-        ],
-      },
-      {
-        source: "/services/:path*",
-        has: [
-          {
-            type: "host",
-            value: process.env.NEXT_PUBLIC_WEBHOOK_BASE_HOST,
-          },
-        ],
-        headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex",
-          },
-        ],
-      },
-      {
-        source: "/api/webhooks/services/:path*",
-        headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex",
-          },
-        ],
-      },
-      {
-        source: "/unsubscribe",
-        headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex",
-          },
-        ],
-      },
-    ];
-  },
-  experimental: {
-    outputFileTracingIncludes: {
-      "/api/mupdf/*": ["./node_modules/mupdf/dist/*.wasm"],
-    },
-    missingSuspenseWithCSRBailout: false,
-  },
-};
+# Install system dependencies
+RUN apk add --no-cache libc6-compat python3 py3-pip
 
-function prepareRemotePatterns() {
-  let patterns = [
-    // static images and videos
-    { protocol: "https", hostname: "assets.papermark.io" },
-    { protocol: "https", hostname: "cdn.papermarkassets.com" },
-    { protocol: "https", hostname: "d2kgph70pw5d9n.cloudfront.net" },
-    // twitter img
-    { protocol: "https", hostname: "pbs.twimg.com" },
-    // linkedin img
-    { protocol: "https", hostname: "media.licdn.com" },
-    // google img
-    { protocol: "https", hostname: "lh3.googleusercontent.com" },
-    // papermark img
-    { protocol: "https", hostname: "www.papermark.io" },
-    { protocol: "https", hostname: "app.papermark.io" },
-    { protocol: "https", hostname: "www.papermark.com" },
-    { protocol: "https", hostname: "app.papermark.com" },
-    // useragent img
-    { protocol: "https", hostname: "faisalman.github.io" },
-    // special document pages
-    { protocol: "https", hostname: "d36r2enbzam0iu.cloudfront.net" },
-    // us special storage
-    { protocol: "https", hostname: "d35vw2hoyyl88.cloudfront.net" },
-  ];
+# Set working directory
+WORKDIR /app
 
-  // Default region patterns
-  if (process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST) {
-    patterns.push({
-      protocol: "https",
-      hostname: process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST,
-    });
-  }
+# Install dependencies
+FROM base AS deps
+COPY package.json package-lock.json* ./
+COPY prisma ./prisma/
+RUN npm ci
 
-  if (process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST) {
-    patterns.push({
-      protocol: "https",
-      hostname: process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST,
-    });
-  }
+# Build the application
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-  // US region patterns
-  if (process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST_US) {
-    patterns.push({
-      protocol: "https",
-      hostname: process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST_US,
-    });
-  }
+# Set build-time environment variables with defaults
+ENV NEXT_PUBLIC_WEBHOOK_BASE_HOST=${NEXT_PUBLIC_WEBHOOK_BASE_HOST:-papermark-production-bbd1.up.railway.app}
+ENV NEXT_PUBLIC_APP_BASE_HOST=${NEXT_PUBLIC_APP_BASE_HOST:-papermark-production-bbd1.up.railway.app}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL:-https://papermark-production-bbd1.up.railway.app}
 
-  if (process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST_US) {
-    patterns.push({
-      protocol: "https",
-      hostname: process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST_US,
-    });
-  }
+# Generate Prisma client (redundant but ensures it's generated)
+RUN npx prisma generate
 
-  if (process.env.VERCEL_ENV === "production") {
-    patterns.push({
-      // production vercel blob
-      protocol: "https",
-      hostname: "yoywvlh29jppecbh.public.blob.vercel-storage.com",
-    });
-  }
+# Build Next.js application
+RUN npm run build
 
-  if (
-    process.env.VERCEL_ENV === "preview" ||
-    process.env.NODE_ENV === "development"
-  ) {
-    patterns.push({
-      // staging vercel blob
-      protocol: "https",
-      hostname: "36so9a8uzykxknsu.public.blob.vercel-storage.com",
-    });
-  }
+# Production image
+FROM base AS runner
+WORKDIR /app
 
-  return patterns;
-}
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-export default nextConfig;
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy built application
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]
