@@ -7,14 +7,24 @@ const nextConfig = {
     remotePatterns: prepareRemotePatterns(),
   },
   skipTrailingSlashRedirect: true,
-  output: 'standalone', // Add this for Railway deployment
   assetPrefix:
     process.env.NODE_ENV === "production" &&
     process.env.VERCEL_ENV === "production"
       ? process.env.NEXT_PUBLIC_BASE_URL
       : undefined,
   async redirects() {
-    const redirects = [
+    return [
+      {
+        source: "/",
+        destination: "/dashboard",
+        permanent: false,
+        has: [
+          {
+            type: "host",
+            value: process.env.NEXT_PUBLIC_APP_BASE_HOST,
+          },
+        ],
+      },
       {
         source: "/view/cm2xiaxzo000d147xszm9q72o",
         destination: "/view/cm34cqqqx000212oekj9upn8o",
@@ -31,28 +41,11 @@ const nextConfig = {
         permanent: false,
       },
     ];
-
-    // Only add the conditional redirect if the environment variable exists
-    if (process.env.NEXT_PUBLIC_APP_BASE_HOST) {
-      redirects.unshift({
-        source: "/",
-        destination: "/dashboard",
-        permanent: false,
-        has: [
-          {
-            type: "host",
-            value: process.env.NEXT_PUBLIC_APP_BASE_HOST,
-          },
-        ],
-      });
-    }
-
-    return redirects;
   },
   async headers() {
     const isDev = process.env.NODE_ENV === "development";
 
-    const headers = [
+    return [
       {
         // Default headers for all routes
         source: "/:path*",
@@ -124,6 +117,21 @@ const nextConfig = {
         ],
       },
       {
+        source: "/services/:path*",
+        has: [
+          {
+            type: "host",
+            value: process.env.NEXT_PUBLIC_WEBHOOK_BASE_HOST,
+          },
+        ],
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex",
+          },
+        ],
+      },
+      {
         source: "/api/webhooks/services/:path*",
         headers: [
           {
@@ -142,6 +150,90 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  experimental: {
+    outputFileTracingIncludes: {
+      "/api/mupdf/*": ["./node_modules/mupdf/dist/*.wasm"],
+    },
+    missingSuspenseWithCSRBailout: false,
+  },
+};
 
-    // Only add the conditional header if the environment variable exists
-    if (process.env.NEXT_
+function prepareRemotePatterns() {
+  let patterns = [
+    // static images and videos
+    { protocol: "https", hostname: "assets.papermark.io" },
+    { protocol: "https", hostname: "cdn.papermarkassets.com" },
+    { protocol: "https", hostname: "d2kgph70pw5d9n.cloudfront.net" },
+    // twitter img
+    { protocol: "https", hostname: "pbs.twimg.com" },
+    // linkedin img
+    { protocol: "https", hostname: "media.licdn.com" },
+    // google img
+    { protocol: "https", hostname: "lh3.googleusercontent.com" },
+    // papermark img
+    { protocol: "https", hostname: "www.papermark.io" },
+    { protocol: "https", hostname: "app.papermark.io" },
+    { protocol: "https", hostname: "www.papermark.com" },
+    { protocol: "https", hostname: "app.papermark.com" },
+    // useragent img
+    { protocol: "https", hostname: "faisalman.github.io" },
+    // special document pages
+    { protocol: "https", hostname: "d36r2enbzam0iu.cloudfront.net" },
+    // us special storage
+    { protocol: "https", hostname: "d35vw2hoyyl88.cloudfront.net" },
+  ];
+
+  // Default region patterns
+  if (process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST) {
+    patterns.push({
+      protocol: "https",
+      hostname: process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST,
+    });
+  }
+
+  if (process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST) {
+    patterns.push({
+      protocol: "https",
+      hostname: process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST,
+    });
+  }
+
+  // US region patterns
+  if (process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST_US) {
+    patterns.push({
+      protocol: "https",
+      hostname: process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST_US,
+    });
+  }
+
+  if (process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST_US) {
+    patterns.push({
+      protocol: "https",
+      hostname: process.env.NEXT_PRIVATE_ADVANCED_UPLOAD_DISTRIBUTION_HOST_US,
+    });
+  }
+
+  if (process.env.VERCEL_ENV === "production") {
+    patterns.push({
+      // production vercel blob
+      protocol: "https",
+      hostname: "yoywvlh29jppecbh.public.blob.vercel-storage.com",
+    });
+  }
+
+  if (
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.NODE_ENV === "development"
+  ) {
+    patterns.push({
+      // staging vercel blob
+      protocol: "https",
+      hostname: "36so9a8uzykxknsu.public.blob.vercel-storage.com",
+    });
+  }
+
+  return patterns;
+}
+
+export default nextConfig;
