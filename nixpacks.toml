@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ['nodejs_20', 'npm', 'python3', 'pipenv']
+
+[phases.install]
+cmds = [
+    'npm ci',
+    'cd lib/tinybird && pipenv install --deploy --ignore-pipfile'
+]
+
+[phases.build]
+cmds = ['npm run build']
+
+[start]
+cmd = 'npm start'
