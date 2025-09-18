@@ -42,6 +42,12 @@ ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://papermark-production-bb
 ENV NEXT_PUBLIC_WEBHOOK_BASE_HOST=${NEXT_PUBLIC_WEBHOOK_BASE_HOST:-papermark-production-bbd1.up.railway.app}
 ENV NEXT_PUBLIC_APP_BASE_HOST=${NEXT_PUBLIC_APP_BASE_HOST:-papermark-production-bbd1.up.railway.app}
 
+# Set placeholder values for build-only requirements
+ENV HANKO_API_KEY=placeholder-build-value
+ENV NEXT_PUBLIC_HANKO_TENANT_ID=placeholder-build-value
+ENV SLACK_CLIENT_ID=placeholder-build-value
+ENV SLACK_CLIENT_SECRET=placeholder-build-value
+
 # Set build environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
