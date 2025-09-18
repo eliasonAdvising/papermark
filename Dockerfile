@@ -30,31 +30,40 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set required environment variables for build
-ENV NODE_ENV=development
-ENV NEXT_TELEMETRY_DISABLED=1
+# Accept build arguments from Railway
+ARG DATABASE_URL
+ARG POSTGRES_PRISMA_URL
+ARG POSTGRES_PRISMA_URL_NON_POOLING
+ARG NEXTAUTH_URL
+ARG NEXT_PUBLIC_BASE_URL
+ARG NEXT_PUBLIC_WEBHOOK_BASE_HOST
+ARG NEXT_PUBLIC_APP_BASE_HOST
 
-# Set default values for required build-time variables
-ENV NEXT_PUBLIC_WEBHOOK_BASE_HOST=${NEXT_PUBLIC_WEBHOOK_BASE_HOST:-papermark-production-bbd1.up.railway.app}
-ENV NEXT_PUBLIC_APP_BASE_HOST=${NEXT_PUBLIC_APP_BASE_HOST:-papermark-production-bbd1.up.railway.app}
-ENV NEXTAUTH_URL=${NEXTAUTH_URL:-https://papermark-production-bbd1.up.railway.app}
-ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://papermark-production-bbd1.up.railway.app}
-
-# For Railway: Map DATABASE_URL to the Prisma expected variables if they're not set
+# Set environment variables from build args
+ENV DATABASE_URL=${DATABASE_URL}
 ENV POSTGRES_PRISMA_URL=${POSTGRES_PRISMA_URL:-${DATABASE_URL}}
 ENV POSTGRES_PRISMA_URL_NON_POOLING=${POSTGRES_PRISMA_URL_NON_POOLING:-${DATABASE_URL}}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL:-https://papermark-production-bbd1.up.railway.app}
+ENV NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://papermark-production-bbd1.up.railway.app}
+ENV NEXT_PUBLIC_WEBHOOK_BASE_HOST=${NEXT_PUBLIC_WEBHOOK_BASE_HOST:-papermark-production-bbd1.up.railway.app}
+ENV NEXT_PUBLIC_APP_BASE_HOST=${NEXT_PUBLIC_APP_BASE_HOST:-papermark-production-bbd1.up.railway.app}
 
-# Generate Prisma client (this runs automatically via postinstall, but ensure it's done)
+# Set build environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Generate Prisma client
 RUN npx prisma generate
 
-# Deploy database migrations only if DATABASE_URL or POSTGRES_PRISMA_URL is available
+# Deploy database migrations if database URL is available
 RUN if [ -n "$DATABASE_URL" ] || [ -n "$POSTGRES_PRISMA_URL" ]; then \
+        echo "Running database migrations..."; \
         npx prisma migrate deploy; \
     else \
         echo "Skipping database migration - no database URL provided"; \
     fi
 
-# Build the application using Next.js (replicating Vercel's vercel-build script)
+# Build the application
 RUN npm run build
 
 # Production stage
