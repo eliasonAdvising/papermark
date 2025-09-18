@@ -1,0 +1,19 @@
+[provider]
+name = "nodejs"
+
+[install]
+packages = ['nodejs_20', 'npm', 'python3', 'pipenv']
+
+[build]
+command = """
+npm ci
+npx prisma generate
+npm run build
+"""
+
+[start]
+command = "npm start"
+
+[env]
+NODE_ENV = "production"
+NODE_VERSION = "20"
