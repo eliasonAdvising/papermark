@@ -55,12 +55,17 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Generate Prisma client
 RUN npx prisma generate
 
+# Debug: Show what database URL is being used
+RUN echo "DATABASE_URL is set: $(echo $DATABASE_URL | cut -c1-20)..."
+RUN echo "POSTGRES_PRISMA_URL is set: $(echo $POSTGRES_PRISMA_URL | cut -c1-20)..."
+
 # Deploy database migrations if database URL is available
-RUN if [ -n "$DATABASE_URL" ] || [ -n "$POSTGRES_PRISMA_URL" ]; then \
+RUN if [ -n "$DATABASE_URL" ] && [ "$DATABASE_URL" != "" ] && [ "${DATABASE_URL#*postgresql://}" != "$DATABASE_URL" ]; then \
         echo "Running database migrations..."; \
         npx prisma migrate deploy; \
     else \
-        echo "Skipping database migration - no database URL provided"; \
+        echo "Skipping database migration - no valid PostgreSQL database URL provided"; \
+        echo "DATABASE_URL: $DATABASE_URL"; \
     fi
 
 # Build the application
