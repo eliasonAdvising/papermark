@@ -44,6 +44,7 @@ export const defaultRange = {
 export default function DashboardPage() {
   const router = useRouter();
   const teamInfo = useTeam();
+  console.log('Team ID: ', teamInfo);
   const { plan, trial } = usePlan();
   const slug = useRef<boolean>(false);
   const [customRange, setCustomRange] = useState<{
