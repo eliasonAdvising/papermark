@@ -19,6 +19,8 @@ export default async function AppMiddleware(req: NextRequest) {
     pathname: path,
     host: url,
     token: !!token,
+    nextauthUrl: process.env.NEXTAUTH_URL,
+    nextauthSecret: !!process.env.NEXTAUTH_SECRET,
   });
 
   // UNAUTHENTICATED if there's no token and the path isn't /login, redirect to /login
