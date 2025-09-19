@@ -22,7 +22,7 @@ export async function startServerPasskeyRegistration({
     userId: user!.id,
     username: user!.name || user!.id,
   });
-
+  console.log('lib/api/auth/passkey.ts ', session);
   return createOptions;
 }
 
@@ -36,7 +36,7 @@ export async function finishServerPasskeyRegistration({
   session: Session;
 }) {
   if (!session) throw new Error("Not logged in");
-
+  console.log('passkey: session ', session);
   await hanko.registration.finalize(credential);
 
   // const sessionUser = session.user as CustomUser;
