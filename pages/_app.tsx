@@ -1,4 +1,4 @@
-import type { AppProps } from "next/app";
+import type { AppProps, AppContext } from "next/app";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 
@@ -101,7 +101,7 @@ export default function App({
   );
 }
 
-App.getInitialProps = async ({ ctx }) => {
+App.getInitialProps = async ({ ctx }: AppContext) => {
   try {
     const token = await getToken({
       req: ctx.req,
