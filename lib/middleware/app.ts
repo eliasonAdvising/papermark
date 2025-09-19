@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+// Define token type based on usage
+interface Token {
+  email?: string;
+  user?: {
+    createdAt?: string;
+  };
+}
+
 export default async function AppMiddleware(req: NextRequest) {
   const url = req.nextUrl;
   const path = url.pathname;
@@ -8,7 +16,7 @@ export default async function AppMiddleware(req: NextRequest) {
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
-  });
+  }) as Token | null;
   console.log('AppMiddleware: Processing', {
     pathname: path,
     host: url.host,
@@ -31,7 +39,7 @@ export default async function AppMiddleware(req: NextRequest) {
   if (
     token?.email &&
     token?.user?.createdAt &&
-    new Date(token?.user?.createdAt).getTime() > Date.now() - 10000 &&
+    new Date(token.user.createdAt).getTime() > Date.now() - 10000 &&
     path !== '/welcome' &&
     !isInvited
   ) {
