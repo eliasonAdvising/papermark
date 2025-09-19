@@ -68,20 +68,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy built application - try standalone first, fallback to regular
-# Copy the standalone output if it exists
+# Copy the entire standalone build
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# IMPORTANT: Copy Prisma files explicitly for runtime migrations
+# Copy necessary Prisma files for migrations
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package.json ./package.json
 
-# Copy the generated Prisma client
+# Copy generated Prisma client into standalone structure
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Install prisma CLI for migrations (since standalone doesn't include it)
+# Install Prisma CLI for migrations
 RUN npm install prisma@6.16.2
 
 # Fix permissions
@@ -94,6 +92,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Start with database migrations then the standalone server
-# Use --schema flag to specify the correct schema location
-CMD ["sh", "-c", "echo 'Starting container...'; ls -la /app/prisma/schema/ && echo 'Running migration with schema path...' && npx prisma migrate deploy --schema=./prisma/schema/schema.prisma && echo 'Migration complete, starting server...' && node server.js"]
+# Start with migrations then server
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema/schema.prisma && node server.js"]
