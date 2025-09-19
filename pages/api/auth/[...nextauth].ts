@@ -30,7 +30,6 @@ function getMainDomainUrl(): string {
   return process.env.NEXTAUTH_URL || "https://app.papermark.com";
 }
 
-// This function can run for a maximum of 180 seconds
 export const config = {
   maxDuration: 180,
 };
@@ -121,7 +120,6 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        // When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
         domain: VERCEL_DEPLOYMENT ? ".papermark.com" : undefined,
         secure: VERCEL_DEPLOYMENT,
       },
@@ -136,7 +134,6 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.user = user;
       }
-      // refresh the user data
       if (trigger === "update") {
         const user = token?.user as CustomUser;
         const refreshedUser = await prisma.user.findUnique({
@@ -149,7 +146,6 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (refreshedUser?.email !== user.email) {
-          // if user has changed email, delete all accounts for the user
           if (user.id && refreshedUser.email) {
             await prisma.account.deleteMany({
               where: { userId: user.id },
@@ -160,11 +156,16 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     session: async ({ session, token }) => {
-      (session.user as CustomUser) = {
+      // Debug logs to inspect token and session
+      console.log('DEBUG: session callback - token:', JSON.stringify(token, null, 2));
+      console.log('DEBUG: session callback - session:', JSON.stringify(session, null, 2));
+
+      // Ensure session.user is typed as CustomUser and safely spread token.user if it exists
+      session.user = {
         id: token.sub,
-        // @ts-ignore
-        ...(token || session).user,
-      };
+        ...(token.user && typeof token.user === 'object' ? token.user : {}),
+      } as CustomUser;
+
       return session;
     },
   },
@@ -209,7 +210,6 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
           return false;
         }
 
-        // Apply rate limiting for signin attempts
         try {
           if (req) {
             const clientIP = getIpAddress(req.headers);
@@ -223,7 +223,7 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
                 message: `Rate limit exceeded for IP ${clientIP} during signin attempt`,
                 type: "error",
               });
-              return false; // Block the signin
+              return false;
             }
           }
         } catch (error) {}
@@ -234,7 +234,6 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
     events: {
       ...authOptions.events,
       signIn: async (message) => {
-        // Identify and track sign-in without blocking the event flow
         await Promise.allSettled([
           identifyUser(message.user.email ?? message.user.id),
           trackAnalytics({
@@ -245,7 +244,6 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
 
         if (message.isNewUser) {
           const { dub_id } = req.cookies;
-          // Only fire lead event if Dub is enabled
           if (dub_id && process.env.DUB_API_KEY) {
             try {
               await dub.track.lead({
