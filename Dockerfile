@@ -88,6 +88,20 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 # Install prisma CLI for migrations (since standalone doesn't include it)
 RUN npm install prisma@6.16.2
 
+# Debug: Check what files are actually in the container
+RUN echo "=== Debugging file structure ===" && \
+    ls -la / && \
+    echo "=== /app contents ===" && \
+    ls -la /app && \
+    echo "=== /app/prisma contents ===" && \
+    ls -la /app/prisma/ || echo "No prisma directory found" && \
+    echo "=== Current working directory ===" && \
+    pwd && \
+    echo "=== Environment variables ===" && \
+    env | grep -E "(NODE_ENV|PATH)" && \
+    echo "=== Which prisma ===" && \
+    which prisma || echo "Prisma not found in PATH"
+
 # Fix permissions
 RUN chown -R nextjs:nodejs /app
 
@@ -99,4 +113,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Start with database migrations then the standalone server
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "echo 'Starting container...'; ls -la /app; ls -la /app/prisma || echo 'No prisma dir'; echo 'Running migration...'; npx prisma migrate deploy && echo 'Migration complete, starting server...' && node server.js"]
