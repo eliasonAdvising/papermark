@@ -1,32 +1,33 @@
-import type { AppProps, AppContext } from "next/app";
-import { Inter } from "next/font/google";
-import Head from "next/head";
+import type { AppProps } from 'next/app';
+import { Inter } from 'next/font/google';
+import Head from 'next/head';
+import { SessionProvider } from 'next-auth/react';
+import PlausibleProvider from 'next-plausible';
+import { NuqsAdapter } from 'nuqs/adapters/next/pages';
+import { TeamProvider } from '@/context/team-context';
+import type { Session } from 'next-auth';
+import { PostHogCustomProvider } from '@/components/providers/posthog-provider';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import '@/styles/globals.css';
+import { EXCLUDED_PATHS } from '@/lib/constants';
 
-import { TeamProvider } from "@/context/team-context";
-import type { Session } from "next-auth";
-import { SessionProvider } from "next-auth/react";
-import PlausibleProvider from "next-plausible";
-import { NuqsAdapter } from "nuqs/adapters/next/pages";
-
-import { EXCLUDED_PATHS } from "@/lib/constants";
-
-import { PostHogCustomProvider } from "@/components/providers/posthog-provider";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { getToken } from 'next-auth/jwt'; // Add this import for getToken
-import type { IncomingMessage } from 'next/dist/server/request/incoming-message';
-
-import "@/styles/globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export default function App({
   Component,
   pageProps: { session, ...pageProps },
   router,
 }: AppProps<{ session: Session }>) {
-  console.log('App: Page Props Session', session);
+  console.log('App: Page Props Session', {
+    session,
+    pathname: router.pathname,
+    env: {
+      nextauthUrl: process.env.NEXTAUTH_URL,
+      nextauthSecret: !!process.env.NEXTAUTH_SECRET,
+    },
+  });
   return (
     <>
       <Head>
@@ -102,39 +103,3 @@ export default function App({
     </>
   );
 }
-
-App.getInitialProps = async ({ ctx }: AppContext) => {
-  try {
-    // Only fetch token on server-side (ctx.req exists)
-    if (!ctx.req) {
-      console.log('App: getInitialProps called client-side, skipping token fetch');
-      return {
-        pageProps: {
-          session: null,
-        },
-      };
-    }
-
-    const token = await getToken({
-      req: ctx.req as IncomingMessage & { cookies: Partial<{ [key: string]: string }> },
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-    console.log('App: Server Token', {
-      token,
-      nextauthUrl: process.env.NEXTAUTH_URL,
-      nextauthSecret: !!process.env.NEXTAUTH_SECRET,
-    });
-    return {
-      pageProps: {
-        session: token,
-      },
-    };
-  } catch (error) {
-    console.error('App: getToken Error', error);
-    return {
-      pageProps: {
-        session: null,
-      },
-    };
-  }
-};
