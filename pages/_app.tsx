@@ -24,7 +24,7 @@ export default function App({
   pageProps: { session, ...pageProps },
   router,
 }: AppProps<{ session: Session }>) {
-  console.log('App: Page Props Session', AppProps<{ session: Session }>);
+  console.log('App: Page Props Session', session);
   return (
     <>
       <Head>
