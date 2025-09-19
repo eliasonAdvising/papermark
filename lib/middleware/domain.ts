@@ -5,13 +5,14 @@ export default async function DomainMiddleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const host = req.headers.get('host');
   console.log('DomainMiddleware: Processing', {
-    pathname: req.nextUrl.pathname,
-    host: req.headers.get('host')
+    pathname: path,
+    host,
   });
 
-  // Skip rewrite for /dashboard
-  if (path.startsWith('/dashboard')) {
-    console.log('DomainMiddleware: Skipping rewrite for /dashboard');
+  // Skip rewrite for app routes
+  const appRoutes = ['/dashboard', '/settings', '/login', '/welcome', '/auth'];
+  if (appRoutes.some(route => path.startsWith(route))) {
+    console.log(`DomainMiddleware: Skipping rewrite for ${path}`);
     return NextResponse.next();
   }
 
