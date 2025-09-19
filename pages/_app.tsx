@@ -100,3 +100,29 @@ export default function App({
     </>
   );
 }
+
+App.getInitialProps = async ({ ctx }) => {
+  try {
+    const token = await getToken({
+      req: ctx.req,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    console.log('App: Server Token', {
+      token,
+      nextauthUrl: process.env.NEXTAUTH_URL,
+      nextauthSecret: !!process.env.NEXTAUTH_SECRET,
+    });
+    return {
+      pageProps: {
+        session: token,
+      },
+    };
+  } catch (error) {
+    console.error('App: getToken Error', error);
+    return {
+      pageProps: {
+        session: null,
+      },
+    };
+  }
+};
