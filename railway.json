@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/dashboard", "destination": "/dashboard" },
+    { "source": "/_next/data/:path*", "destination": "/_next/data/:path*" }
+  ]
+}
