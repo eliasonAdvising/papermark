@@ -1,30 +1,27 @@
-import type { AppProps } from "next/app";
-import { Inter } from "next/font/google";
-import Head from "next/head";
+import type { AppProps } from 'next/app';
+import { Inter } from 'next/font/google';
+import Head from 'next/head';
+import { getServerSession } from 'next-auth';
+import { SessionProvider } from 'next-auth/react';
+import PlausibleProvider from 'next-plausible';
+import { NuqsAdapter } from 'nuqs/adapters/next/pages';
+import { TeamProvider } from '@/context/team-context';
+import type { Session } from 'next-auth';
+import { PostHogCustomProvider } from '@/components/providers/posthog-provider';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import '@/styles/globals.css';
+import { authOptions } from '@/lib/auth'; // Adjust path to your NextAuth config
 
-import { TeamProvider } from "@/context/team-context";
-import type { Session } from "next-auth";
-import { SessionProvider } from "next-auth/react";
-import PlausibleProvider from "next-plausible";
-import { NuqsAdapter } from "nuqs/adapters/next/pages";
-
-import { EXCLUDED_PATHS } from "@/lib/constants";
-
-import { PostHogCustomProvider } from "@/components/providers/posthog-provider";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-
-import "@/styles/globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export default function App({
   Component,
   pageProps: { session, ...pageProps },
   router,
 }: AppProps<{ session: Session }>) {
-  console.log('Session: ', session);
+  console.log('App: Page Props Session', session);
   return (
     <>
       <Head>
@@ -100,3 +97,14 @@ export default function App({
     </>
   );
 }
+
+// Add getInitialProps to fetch session server-side
+App.getInitialProps = async ({ ctx }) => {
+  const session = await getServerSession(ctx.req, ctx.res, authOptions);
+  console.log('App: Server Session', session);
+  return {
+    pageProps: {
+      session,
+    },
+  };
+};
