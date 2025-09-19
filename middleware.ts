@@ -50,6 +50,11 @@ export const config = {
 export default async function middleware(req: NextRequest, ev: NextFetchEvent) {
   const path = req.nextUrl.pathname;
   const host = req.headers.get("host");
+  console.log('Middleware: Processing', {
+    path,
+    host,
+    isCustomDomain: isCustomDomain(host || ''),
+  });
 
   if (isAnalyticsPath(path)) {
     return PostHogMiddleware(req);
