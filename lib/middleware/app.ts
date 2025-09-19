@@ -15,6 +15,11 @@ export default async function AppMiddleware(req: NextRequest) {
       createdAt?: string;
     };
   };
+  console.log('AppMiddleware: Processing', {
+    pathname: path,
+    host: url,
+    token: !!token,
+  });
 
   // UNAUTHENTICATED if there's no token and the path isn't /login, redirect to /login
   if (!token?.email && path !== "/login") {
