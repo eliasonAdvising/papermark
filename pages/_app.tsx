@@ -104,8 +104,18 @@ export default function App({
 
 App.getInitialProps = async ({ ctx }: AppContext) => {
   try {
+    // Only fetch token on server-side (ctx.req exists)
+    if (!ctx.req) {
+      console.log('App: getInitialProps called client-side, skipping token fetch');
+      return {
+        pageProps: {
+          session: null,
+        },
+      };
+    }
+
     const token = await getToken({
-      req: ctx.req,
+      req: ctx.req as IncomingMessage & { cookies: Partial<{ [key: string]: string }> },
       secret: process.env.NEXTAUTH_SECRET,
     });
     console.log('App: Server Token', {
