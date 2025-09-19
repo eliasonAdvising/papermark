@@ -15,6 +15,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { getToken } from 'next-auth/jwt'; // Add this import for getToken
+import type { IncomingMessage } from 'next/dist/server/request/incoming-message';
 
 import "@/styles/globals.css";
 
