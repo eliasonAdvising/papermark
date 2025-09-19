@@ -6,8 +6,7 @@ export default async function DomainMiddleware(req: NextRequest) {
   const host = req.headers.get('host');
   console.log('DomainMiddleware: Processing', {
     pathname: req.nextUrl.pathname,
-    host: req.headers.get('host'),
-    session: await getServerSession(),
+    host: req.headers.get('host')
   });
 
   // Skip rewrite for /dashboard
