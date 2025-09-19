@@ -58,8 +58,12 @@ RUN npx prisma generate
 # Skip database migration during build - will handle at runtime
 RUN echo "Skipping database migration during build - will run at application startup"
 
-# Build the application
+# Build the application (this should create .next/standalone)
 RUN npm run build
+
+# Debug: Check if standalone directory was created
+RUN ls -la .next/ || echo "No .next directory found"
+RUN ls -la .next/standalone/ || echo "No standalone directory found"
 
 # Production stage
 FROM base AS runner
@@ -68,20 +72,16 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy built application with correct ownership
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# Copy built application - try standalone first, fallback to regular
+# Copy the standalone output if it exists
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# Copy source files needed for runtime
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/pages ./pages
-COPY --from=builder --chown=nextjs:nodejs /app/app ./app
-COPY --from=builder --chown=nextjs:nodejs /app/components ./components
-COPY --from=builder --chown=nextjs:nodejs /app/lib ./lib
-COPY --from=builder --chown=nextjs:nodejs /app/styles ./styles
-COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
+# Copy Prisma files for runtime
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./package.json
 
 # Fix permissions
 RUN chown -R nextjs:nodejs /app
@@ -93,5 +93,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Create startup script that runs migrations then starts the app
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+# Start with database migrations then the standalone server
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
