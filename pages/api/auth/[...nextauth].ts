@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-
 import { checkRateLimit, rateLimiters } from "@/ee/features/security";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import PasskeyProvider from "@teamhanko/passkeys-next-auth-provider";
@@ -7,7 +6,6 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import LinkedInProvider from "next-auth/providers/linkedin";
-
 import { identifyUser, trackAnalytics } from "@/lib/analytics";
 import { dub } from "@/lib/dub";
 import { isBlacklistedEmail } from "@/lib/edge-config/blacklist";
@@ -22,15 +20,15 @@ import { generateChecksum } from "@/lib/utils/generate-checksum";
 import { getIpAddress } from "@/lib/utils/ip";
 
 const VERCEL_DEPLOYMENT = !!process.env.VERCEL_URL;
+const RAILWAY_DEPLOYMENT = process.env.RAILWAY_ENVIRONMENT === "production";
 
 function getMainDomainUrl(): string {
   if (process.env.NODE_ENV === "development") {
     return process.env.NEXTAUTH_URL || "http://localhost:3000";
   }
-  return process.env.NEXTAUTH_URL || "https://app.papermark.com";
+  return process.env.NEXTAUTH_URL || "https://papermark-production-bbd1.up.railway.app";
 }
 
-// This function can run for a maximum of 180 seconds
 export const config = {
   maxDuration: 180,
 };
@@ -116,27 +114,30 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   cookies: {
     sessionToken: {
-      name: `${VERCEL_DEPLOYMENT ? "__Secure-" : ""}next-auth.session-token`,
+      name: `${VERCEL_DEPLOYMENT || RAILWAY_DEPLOYMENT ? "__Secure-" : ""}next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        // When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
-        domain: VERCEL_DEPLOYMENT ? ".papermark.com" : undefined,
-        secure: VERCEL_DEPLOYMENT,
+        domain: RAILWAY_DEPLOYMENT
+          ? ".papermark-production-bbd1.up.railway.app"
+          : VERCEL_DEPLOYMENT
+          ? ".papermark.com"
+          : undefined,
+        secure: VERCEL_DEPLOYMENT || RAILWAY_DEPLOYMENT,
       },
     },
   },
   callbacks: {
     jwt: async (params) => {
       const { token, user, trigger } = params;
+      console.log('NextAuth: JWT Callback', { token, user, trigger });
       if (!token.email) {
         return {};
       }
       if (user) {
         token.user = user;
       }
-      // refresh the user data
       if (trigger === "update") {
         const user = token?.user as CustomUser;
         const refreshedUser = await prisma.user.findUnique({
@@ -147,9 +148,7 @@ export const authOptions: NextAuthOptions = {
         } else {
           return {};
         }
-
         if (refreshedUser?.email !== user.email) {
-          // if user has changed email, delete all accounts for the user
           if (user.id && refreshedUser.email) {
             await prisma.account.deleteMany({
               where: { userId: user.id },
@@ -160,9 +159,9 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     session: async ({ session, token }) => {
+      console.log('NextAuth: Session Callback', { session, token });
       (session.user as CustomUser) = {
         id: token.sub,
-        // @ts-ignore
         ...(token || session).user,
       };
       return session;
@@ -176,19 +175,19 @@ export const authOptions: NextAuthOptions = {
           email: message.user.email,
         },
       };
-
       await identifyUser(message.user.email ?? message.user.id);
       await trackAnalytics({
         event: "User Signed Up",
         email: message.user.email,
         userId: message.user.id,
       });
-
       await sendWelcomeEmail(params);
-
       if (message.user.email) {
         await subscribe(message.user.email);
       }
+    },
+    async signIn(message) {
+      console.log('NextAuth: SignIn Event', { user: message.user, isNewUser: message.isNewUser });
     },
   },
 };
@@ -199,6 +198,7 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
     callbacks: {
       ...authOptions.callbacks,
       signIn: async ({ user }) => {
+        console.log('NextAuth: SignIn Callback', { user });
         if (!user.email || (await isBlacklistedEmail(user.email))) {
           await identifyUser(user.email ?? user.id);
           await trackAnalytics({
@@ -208,8 +208,6 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
           });
           return false;
         }
-
-        // Apply rate limiting for signin attempts
         try {
           if (req) {
             const clientIP = getIpAddress(req.headers);
@@ -217,24 +215,23 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
               rateLimiters.auth,
               clientIP,
             );
-
             if (!rateLimitResult.success) {
               log({
                 message: `Rate limit exceeded for IP ${clientIP} during signin attempt`,
                 type: "error",
               });
-              return false; // Block the signin
+              return false;
             }
           }
-        } catch (error) {}
-
+        } catch (error) {
+          console.error('NextAuth: RateLimit Error', error);
+        }
         return true;
       },
     },
     events: {
       ...authOptions.events,
       signIn: async (message) => {
-        // Identify and track sign-in without blocking the event flow
         await Promise.allSettled([
           identifyUser(message.user.email ?? message.user.id),
           trackAnalytics({
@@ -242,10 +239,8 @@ const getAuthOptions = (req: NextApiRequest): NextAuthOptions => {
             email: message.user.email,
           }),
         ]);
-
         if (message.isNewUser) {
           const { dub_id } = req.cookies;
-          // Only fire lead event if Dub is enabled
           if (dub_id && process.env.DUB_API_KEY) {
             try {
               await dub.track.lead({
