@@ -44,6 +44,8 @@ const nextConfig = {
   },
   async headers() {
     const isDev = process.env.NODE_ENV === "development";
+    // Debug log for webhook host
+    console.log('DEBUG: NEXT_PUBLIC_WEBHOOK_BASE_HOST =', process.env.NEXT_PUBLIC_WEBHOOK_BASE_HOST);
 
     return [
       {
@@ -79,7 +81,7 @@ const nextConfig = {
               `img-src 'self' data: blob: https: ${isDev ? "http:" : ""}; ` +
               `font-src 'self' data: https: ${isDev ? "http:" : ""}; ` +
               `frame-ancestors 'none'; ` +
-              `connect-src 'self' https: ${isDev ? "http: ws: wss:" : ""}; ` + // Add WebSocket for hot reload
+              `connect-src 'self' https: ${isDev ? "http: ws: wss:" : ""}; ` +
               `${isDev ? "" : "upgrade-insecure-requests;"} ` +
               "report-to csp-endpoint;",
           },
@@ -95,7 +97,6 @@ const nextConfig = {
         ],
       },
       {
-        // Embed routes - allow iframe embedding
         source: "/view/:path*/embed",
         headers: [
           {
@@ -106,8 +107,8 @@ const nextConfig = {
               `style-src 'self' 'unsafe-inline' https: ${isDev ? "http:" : ""}; ` +
               `img-src 'self' data: blob: https: ${isDev ? "http:" : ""}; ` +
               `font-src 'self' data: https: ${isDev ? "http:" : ""}; ` +
-              "frame-ancestors *; " + // This allows iframe embedding
-              `connect-src 'self' https: ${isDev ? "http: ws: wss:" : ""}; ` + // Add WebSocket for hot reload
+              "frame-ancestors *; " +
+              `connect-src 'self' https: ${isDev ? "http: ws: wss:" : ""}; ` +
               `${isDev ? "" : "upgrade-insecure-requests;"}`,
           },
           {
@@ -118,12 +119,17 @@ const nextConfig = {
       },
       {
         source: "/services/:path*",
-        has: [
-          {
-            type: "host",
-            value: process.env.NEXT_PUBLIC_WEBHOOK_BASE_HOST,
-          },
-        ],
+        // Only include has condition if NEXT_PUBLIC_WEBHOOK_BASE_HOST is defined
+        ...(process.env.NEXT_PUBLIC_WEBHOOK_BASE_HOST
+          ? {
+              has: [
+                {
+                  type: "host",
+                  value: process.env.NEXT_PUBLIC_WEBHOOK_BASE_HOST,
+                },
+              ],
+            }
+          : {}),
         headers: [
           {
             key: "X-Robots-Tag",
@@ -161,30 +167,21 @@ const nextConfig = {
 
 function prepareRemotePatterns() {
   let patterns = [
-    // static images and videos
     { protocol: "https", hostname: "assets.papermark.io" },
     { protocol: "https", hostname: "cdn.papermarkassets.com" },
     { protocol: "https", hostname: "d2kgph70pw5d9n.cloudfront.net" },
-    // twitter img
     { protocol: "https", hostname: "pbs.twimg.com" },
-    // linkedin img
     { protocol: "https", hostname: "media.licdn.com" },
-    // google img
     { protocol: "https", hostname: "lh3.googleusercontent.com" },
-    // papermark img
     { protocol: "https", hostname: "www.papermark.io" },
     { protocol: "https", hostname: "app.papermark.io" },
     { protocol: "https", hostname: "www.papermark.com" },
     { protocol: "https", hostname: "app.papermark.com" },
-    // useragent img
     { protocol: "https", hostname: "faisalman.github.io" },
-    // special document pages
     { protocol: "https", hostname: "d36r2enbzam0iu.cloudfront.net" },
-    // us special storage
     { protocol: "https", hostname: "d35vw2hoyyl88.cloudfront.net" },
   ];
 
-  // Default region patterns
   if (process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST) {
     patterns.push({
       protocol: "https",
@@ -199,7 +196,6 @@ function prepareRemotePatterns() {
     });
   }
 
-  // US region patterns
   if (process.env.NEXT_PRIVATE_UPLOAD_DISTRIBUTION_HOST_US) {
     patterns.push({
       protocol: "https",
@@ -216,7 +212,6 @@ function prepareRemotePatterns() {
 
   if (process.env.VERCEL_ENV === "production") {
     patterns.push({
-      // production vercel blob
       protocol: "https",
       hostname: "yoywvlh29jppecbh.public.blob.vercel-storage.com",
     });
@@ -227,7 +222,6 @@ function prepareRemotePatterns() {
     process.env.NODE_ENV === "development"
   ) {
     patterns.push({
-      // staging vercel blob
       protocol: "https",
       hostname: "36so9a8uzykxknsu.public.blob.vercel-storage.com",
     });
