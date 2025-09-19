@@ -78,10 +78,15 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Copy Prisma files for runtime
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# IMPORTANT: Copy Prisma files explicitly for runtime migrations
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
+
+# Copy the generated Prisma client
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Install prisma CLI for migrations (since standalone doesn't include it)
+RUN npm install prisma@6.16.2
 
 # Fix permissions
 RUN chown -R nextjs:nodejs /app
