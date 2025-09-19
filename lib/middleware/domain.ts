@@ -5,6 +5,10 @@ import { BLOCKED_PATHNAMES } from "@/lib/constants";
 export default async function DomainMiddleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const host = req.headers.get("host");
+  console.log('DomainMiddleware: Processing', {
+    pathname: req.nextUrl.pathname,
+    host: req.headers.get('host')
+  });
 
   // If it's the root path, redirect to papermark.com/home
   if (path === "/") {
