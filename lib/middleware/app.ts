@@ -16,11 +16,13 @@ export default async function AppMiddleware(req: NextRequest) {
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
+    cookieName: 'next-auth.session-token',
   }) as Token | null;
   console.log('AppMiddleware: Processing', {
     pathname: path,
     host: url.host,
     token,
+    cookies: req.cookies.get('next-auth.session-token'),
     nextauthUrl: process.env.NEXTAUTH_URL,
     nextauthSecret: !!process.env.NEXTAUTH_SECRET,
   });
