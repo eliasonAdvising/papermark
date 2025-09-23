@@ -7,11 +7,11 @@ const nextConfig = {
     remotePatterns: prepareRemotePatterns(),
   },
   skipTrailingSlashRedirect: true,
-  assetPrefix:
-    process.env.NODE_ENV === "production" &&
-    process.env.VERCEL_ENV === "production"
-      ? process.env.NEXT_PUBLIC_BASE_URL
-      : undefined,
+ // assetPrefix:
+ //   process.env.NODE_ENV === "production" &&
+ //   process.env.VERCEL_ENV === "production"
+ //     ? process.env.NEXT_PUBLIC_BASE_URL
+ //     : undefined,
   async redirects() {
     return [
       {
