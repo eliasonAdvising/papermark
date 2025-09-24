@@ -20,26 +20,29 @@ function isAnalyticsPath(path: string) {
 }
 
 function isCustomDomain(host: string) {
+  // In development, only treat .local and papermark.dev as custom domains
+  if (process.env.NODE_ENV === "development") {
+    return host?.includes(".local") || host?.includes("papermark.dev");
+  }
+
+  // In production, check if this is a legitimate app domain
   const authUrl = process.env.NEXTAUTH_URL;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-  // Get the expected hostname from environment variables
-  const expectedHost = authUrl ? new URL(authUrl).hostname :
-                      baseUrl ? new URL(baseUrl).hostname :
-                      'app.papermark.com';
+  // Get list of legitimate app hostnames
+  const legitimateHosts = [];
+  if (authUrl) legitimateHosts.push(new URL(authUrl).hostname);
+  if (baseUrl) legitimateHosts.push(new URL(baseUrl).hostname);
 
-  return (
-    (process.env.NODE_ENV === "development" &&
-      (host?.includes(".local") || host?.includes("papermark.dev"))) ||
-    (process.env.NODE_ENV !== "development" &&
-      !(
-        host?.includes("localhost") ||
-        host === expectedHost ||
-        host?.includes("papermark.io") ||
-        host?.includes("papermark.com") ||
-        host?.endsWith(".vercel.app")
-      ))
-  );
+  // Known papermark domains and vercel apps are legitimate
+  const isLegitimate = host?.includes("localhost") ||
+                      host?.includes("papermark.io") ||
+                      host?.includes("papermark.com") ||
+                      host?.endsWith(".vercel.app") ||
+                      legitimateHosts.includes(host || "");
+
+  // Return true for custom domains (NOT legitimate app domains)
+  return !isLegitimate;
 }
 
 export const config = {
