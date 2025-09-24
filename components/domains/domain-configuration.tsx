@@ -17,7 +17,51 @@ export default function DomainConfiguration({
   response: { domainJson: any; configJson: any };
 }) {
   const { domainJson, configJson } = response;
-  const subdomain = getSubdomain(domainJson.name, domainJson.apexName);
+
+  // Handle case where domain is not found in Vercel project
+  if (status === "Domain Not Found") {
+    return (
+      <div className="pt-5">
+        <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-4">
+          <h3 className="text-sm font-medium text-orange-800">
+            Domain Not Added to Vercel Project
+          </h3>
+          <p className="mt-1 text-sm text-orange-700">
+            This domain was not successfully added to your Vercel project. This usually means:
+          </p>
+          <ul className="mt-2 list-disc list-inside text-sm text-orange-700">
+            <li>Missing or incorrect Vercel API credentials</li>
+            <li>Insufficient permissions for the API token</li>
+            <li>Domain already exists in another Vercel project</li>
+          </ul>
+          <p className="mt-2 text-sm text-orange-700">
+            Please check your environment variables: <code>PROJECT_ID_VERCEL</code>, <code>TEAM_ID_VERCEL</code>, and <code>AUTH_BEARER_TOKEN</code>.
+          </p>
+        </div>
+
+        {configJson && (
+          <div>
+            <p className="mb-3 text-sm text-gray-600">
+              If you want to manually configure DNS, use these records:
+            </p>
+            <DnsRecord
+              instructions="Set the following CNAME record on your DNS provider:"
+              records={[
+                {
+                  type: "CNAME",
+                  name: "www",
+                  value: configJson?.recommendedCNAME?.[0]?.value ?? "cname.vercel-dns.com",
+                  ttl: "86400",
+                }
+              ]}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const subdomain = getSubdomain(domainJson?.name, domainJson?.apexName);
   const [recordType, setRecordType] = useState(!!subdomain ? "CNAME" : "A");
 
   if (status === "Conflicting DNS Records") {
@@ -97,7 +141,7 @@ export default function DomainConfiguration({
         instructions={`To configure your ${
           recordType === "A" ? "apex domain" : "subdomain"
         } <code>${
-          recordType === "A" ? domainJson.apexName : domainJson.name
+          recordType === "A" ? (domainJson?.apexName ?? "your-domain.com") : (domainJson?.name ?? "www.your-domain.com")
         }</code>, set the following ${txtVerification ? "records" : `${recordType} record`} on your DNS provider:`}
         records={[
           {
