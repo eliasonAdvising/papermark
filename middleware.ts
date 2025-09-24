@@ -80,7 +80,7 @@ export default async function middleware(req: NextRequest, ev: NextFetchEvent) {
   }
 
   // Handle incoming webhooks
-  if (isWebhookPath(host)) {
+  if (isWebhookPath(host, path)) {
     console.log(`[MIDDLEWARE DEBUG] Webhook path - routing to IncomingWebhookMiddleware`);
     return IncomingWebhookMiddleware(req);
   }
