@@ -20,12 +20,21 @@ function isAnalyticsPath(path: string) {
 }
 
 function isCustomDomain(host: string) {
+  const authUrl = process.env.NEXTAUTH_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+  // Get the expected hostname from environment variables
+  const expectedHost = authUrl ? new URL(authUrl).hostname :
+                      baseUrl ? new URL(baseUrl).hostname :
+                      'app.papermark.com';
+
   return (
     (process.env.NODE_ENV === "development" &&
       (host?.includes(".local") || host?.includes("papermark.dev"))) ||
     (process.env.NODE_ENV !== "development" &&
       !(
         host?.includes("localhost") ||
+        host === expectedHost ||
         host?.includes("papermark.io") ||
         host?.includes("papermark.com") ||
         host?.endsWith(".vercel.app")

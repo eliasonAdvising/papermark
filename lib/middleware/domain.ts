@@ -26,8 +26,9 @@ export default async function DomainMiddleware(req: NextRequest) {
       );
     }
 
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.papermark.com";
     return NextResponse.redirect(
-      new URL("https://www.papermark.com/home", req.url),
+      new URL(`${baseUrl}/dashboard`, req.url),
     );
   }
 
