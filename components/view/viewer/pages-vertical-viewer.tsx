@@ -477,16 +477,16 @@ export default function PagesVerticalViewer({
       pageNumberRef.current = maxVisiblePage;
       startTimeRef.current = Date.now();
     }
-  }, [pageNumber, numPages, loadedImages, setLoadedImages, imageRefs, linkId, documentId, viewId, versionNumber, dataroomId, setViewedPages, isPreview, trackPageViewSafely, getActiveDuration]);
+  }, [pageNumber, numPages, numPagesWithFeedback, loadedImages, setLoadedImages, imageRefs, linkId, documentId, viewId, versionNumber, dataroomId, setViewedPages, isPreview, trackPageViewSafely, getActiveDuration]);
 
   // Function to preload next image
-  const preloadImage = (index: number) => {
+  const preloadImage = useCallback((index: number) => {
     if (index < numPages && !loadedImages[index]) {
       const newLoadedImages = [...loadedImages];
       newLoadedImages[index] = true;
       setLoadedImages(newLoadedImages);
     }
-  };
+  }, [numPages, loadedImages, setLoadedImages]);
 
   const goToPreviousPage = useCallback(() => {
     if (pageNumber <= 1) return;

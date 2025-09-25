@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useTeam } from "@/context/team-context";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -213,15 +213,15 @@ export default function PDFViewer(props: any) {
   }, [pageNumber, goToNextPage, goToPreviousPage]);
 
   // Go to next page
-  function goToNextPage() {
+  const goToNextPage = useCallback(() => {
     if (pageNumber >= numPages!) return;
     setPageNumber((prevPageNumber) => prevPageNumber + 1);
-  }
+  }, [pageNumber, numPages]);
 
-  function goToPreviousPage() {
+  const goToPreviousPage = useCallback(() => {
     if (pageNumber <= 1) return;
     setPageNumber((prevPageNumber) => prevPageNumber - 1);
-  }
+  }, [pageNumber]);
 
   async function downloadfile(e: React.MouseEvent<HTMLButtonElement>) {
     try {
@@ -244,7 +244,7 @@ export default function PDFViewer(props: any) {
     }
   }
 
-  async function updateNumPages(numPages: number) {
+  const updateNumPages = useCallback(async (numPages: number) => {
     await fetch(`/api/teams/${teamInfo?.currentTeam?.id}/documents/update`, {
       method: "POST",
       body: JSON.stringify({
@@ -255,7 +255,7 @@ export default function PDFViewer(props: any) {
         "Content-Type": "application/json",
       },
     });
-  }
+  }, [teamInfo?.currentTeam?.id, documentId]);
 
   return (
     <>

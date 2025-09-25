@@ -18,6 +18,10 @@ export default function DomainConfiguration({
 }) {
   const { domainJson, configJson } = response;
 
+  // Initialize useState hook at the top to avoid conditional hook calls
+  const subdomain = getSubdomain(domainJson?.name, domainJson?.apexName);
+  const [recordType, setRecordType] = useState(!!subdomain ? "CNAME" : "A");
+
   // Handle case where domain is not found in Vercel project
   if (status === "Domain Not Found") {
     return (
@@ -60,9 +64,6 @@ export default function DomainConfiguration({
       </div>
     );
   }
-
-  const subdomain = getSubdomain(domainJson?.name, domainJson?.apexName);
-  const [recordType, setRecordType] = useState(!!subdomain ? "CNAME" : "A");
 
   if (status === "Conflicting DNS Records") {
     return (
