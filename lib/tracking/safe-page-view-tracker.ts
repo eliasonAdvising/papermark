@@ -186,7 +186,7 @@ export function useSafePageViewTracker(options: TrackingOptions = {}) {
         }
 
         return totalActiveTime;
-    }, [activityTracking]);
+    }, [activityTracking, startTimeRef]);
 
     const startIntervalTracking = useCallback((trackingData: Omit<TrackingData, 'duration'>) => {
         if (!intervalTracking) return;
@@ -222,7 +222,7 @@ export function useSafePageViewTracker(options: TrackingOptions = {}) {
                 startTimeRef.current = Date.now();
             }
         }, intervalDuration);
-    }, [intervalTracking, intervalDuration, getActiveDuration, trackPageViewSafely, startInactivityTimeout]);
+    }, [intervalTracking, intervalDuration, getActiveDuration, trackPageViewSafely, startInactivityTimeout, startTimeRef]);
 
     const stopIntervalTracking = useCallback(() => {
         if (intervalIdRef.current) {
@@ -255,7 +255,7 @@ export function useSafePageViewTracker(options: TrackingOptions = {}) {
 
         // Restart inactivity timeout if activity tracking is enabled
         startInactivityTimeout();
-    }, [startInactivityTimeout]);
+    }, [startInactivityTimeout, startTimeRef]);
 
     // TODO: for debugging
     // const getTrackingState = () => ({

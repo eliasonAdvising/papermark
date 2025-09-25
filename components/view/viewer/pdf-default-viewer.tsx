@@ -130,7 +130,7 @@ export default function PDFViewer(props: any) {
     if (numPages > 0) {
       updateNumPages(numPages);
     }
-  }, [numPages]); // monitor numPages for changes
+  }, [numPages, updateNumPages]); // monitor numPages for changes
 
   function onDocumentLoadSuccess({
     numPages: nextNumPages,
@@ -171,6 +171,7 @@ export default function PDFViewer(props: any) {
     documentId,
     viewId,
     props.versionNumber,
+    props?.navData?.dataroomId,
     isPreview,
     trackPageViewSafely,
     stopIntervalTracking,
@@ -209,7 +210,7 @@ export default function PDFViewer(props: any) {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [pageNumber]);
+  }, [pageNumber, goToNextPage, goToPreviousPage]);
 
   // Go to next page
   function goToNextPage() {

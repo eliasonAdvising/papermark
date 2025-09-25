@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import React from "react";
 
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -401,9 +401,9 @@ export default function PagesVerticalViewer({
     if (!dataroomId && router.query.token) {
       removeQueryParams(["token", "email", "domain", "slug", "linkId"]);
     }
-  }, []); // Run once on mount
+  }, [dataroomId, router]); // Include missing dependencies
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
@@ -477,7 +477,7 @@ export default function PagesVerticalViewer({
       pageNumberRef.current = maxVisiblePage;
       startTimeRef.current = Date.now();
     }
-  };
+  }, [pageNumber, numPages, loadedImages, setLoadedImages, imageRefs, linkId, documentId, viewId, versionNumber, dataroomId, setViewedPages, isPreview, trackPageViewSafely, getActiveDuration]);
 
   // Function to preload next image
   const preloadImage = (index: number) => {
@@ -488,7 +488,7 @@ export default function PagesVerticalViewer({
     }
   };
 
-  const goToPreviousPage = () => {
+  const goToPreviousPage = useCallback(() => {
     if (pageNumber <= 1) return;
     if (enableQuestion && feedback && pageNumber === numPagesWithFeedback) {
       const targetImg = imageRefs.current[pageNumber - 2];
@@ -532,9 +532,9 @@ export default function PagesVerticalViewer({
       setPageNumber(pageNumber - 1);
       startTimeRef.current = Date.now();
     }
-  };
+  }, [pageNumber, enableQuestion, feedback, numPagesWithFeedback, imageRefs, getActiveDuration, trackPageViewSafely, linkId, documentId, viewId, versionNumber, dataroomId, setViewedPages, isPreview, preloadImage]);
 
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     if (pageNumber >= numPagesWithAccountCreation) return;
 
     if (pageNumber === numPages && enableQuestion && feedback) {
@@ -579,9 +579,9 @@ export default function PagesVerticalViewer({
       setPageNumber(pageNumber + 1);
       startTimeRef.current = Date.now();
     }
-  };
+  }, [pageNumber, numPagesWithAccountCreation, numPages, enableQuestion, feedback, numPagesWithFeedback, imageRefs, preloadImage, getActiveDuration, trackPageViewSafely, linkId, documentId, viewId, versionNumber, dataroomId, setViewedPages, isPreview]);
 
-  const handleKeyDown = (event: KeyboardEvent) => {
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
     switch (event.key) {
       case "ArrowDown":
         event.preventDefault(); // Prevent default behavior
@@ -606,7 +606,7 @@ export default function PagesVerticalViewer({
       default:
         break;
     }
-  };
+  }, [goToNextPage, goToPreviousPage]);
 
   const handleLinkClick = (href: string, event: React.MouseEvent) => {
     // Check if it's an internal page link or external link
@@ -687,16 +687,17 @@ export default function PagesVerticalViewer({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleKeyDown, goToNextPage, goToPreviousPage]);
+  }, [handleKeyDown]);
 
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.addEventListener("scroll", handleScroll);
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
     }
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.removeEventListener("scroll", handleScroll);
+      if (container) {
+        container.removeEventListener("scroll", handleScroll);
       }
     };
   }, [handleScroll]);
