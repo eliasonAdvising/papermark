@@ -202,6 +202,17 @@ export default function PDFViewer(props: any) {
     standardFontDataUrl: "standard_fonts/",
   };
 
+  // Go to next page
+  const goToNextPage = useCallback(() => {
+    if (pageNumber >= numPages!) return;
+    setPageNumber((prevPageNumber) => prevPageNumber + 1);
+  }, [pageNumber, numPages]);
+
+  const goToPreviousPage = useCallback(() => {
+    if (pageNumber <= 1) return;
+    setPageNumber((prevPageNumber) => prevPageNumber - 1);
+  }, [pageNumber]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       switch (event.key) {
@@ -224,17 +235,6 @@ export default function PDFViewer(props: any) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [pageNumber, goToNextPage, goToPreviousPage]);
-
-  // Go to next page
-  const goToNextPage = useCallback(() => {
-    if (pageNumber >= numPages!) return;
-    setPageNumber((prevPageNumber) => prevPageNumber + 1);
-  }, [pageNumber, numPages]);
-
-  const goToPreviousPage = useCallback(() => {
-    if (pageNumber <= 1) return;
-    setPageNumber((prevPageNumber) => prevPageNumber - 1);
-  }, [pageNumber]);
 
   async function downloadfile(e: React.MouseEvent<HTMLButtonElement>) {
     try {

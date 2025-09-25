@@ -477,7 +477,7 @@ export default function PagesVerticalViewer({
       pageNumberRef.current = maxVisiblePage;
       startTimeRef.current = Date.now();
     }
-  }, [pageNumber, numPages, numPagesWithFeedback, loadedImages, setLoadedImages, imageRefs, linkId, documentId, viewId, versionNumber, dataroomId, setViewedPages, isPreview, trackPageViewSafely, getActiveDuration]);
+  }, [pageNumber, numPages, numPagesWithFeedback, setLoadedImages, imageRefs, linkId, documentId, viewId, versionNumber, dataroomId, setViewedPages, isPreview, trackPageViewSafely, getActiveDuration]);
 
   // Function to preload next image
   const preloadImage = useCallback((index: number) => {
