@@ -126,6 +126,19 @@ export default function PDFViewer(props: any) {
     getActiveDuration,
   ]);
 
+  const updateNumPages = useCallback(async (numPages: number) => {
+    await fetch(`/api/teams/${teamInfo?.currentTeam?.id}/documents/update`, {
+      method: "POST",
+      body: JSON.stringify({
+        documentId: documentId,
+        numPages: numPages,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }, [teamInfo?.currentTeam?.id, documentId]);
+
   useEffect(() => {
     if (numPages > 0) {
       updateNumPages(numPages);
@@ -243,19 +256,6 @@ export default function PDFViewer(props: any) {
       console.error("Error downloading file:", error);
     }
   }
-
-  const updateNumPages = useCallback(async (numPages: number) => {
-    await fetch(`/api/teams/${teamInfo?.currentTeam?.id}/documents/update`, {
-      method: "POST",
-      body: JSON.stringify({
-        documentId: documentId,
-        numPages: numPages,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  }, [teamInfo?.currentTeam?.id, documentId]);
 
   return (
     <>
