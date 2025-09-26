@@ -1,4 +1,4 @@
-import { logger, retry, task } from "@trigger.dev/sdk/v3";
+import { logger, retry, task } from "@trigger.dev/sdk";
 
 import { getFile } from "@/lib/files/get-file";
 import { putFileServer } from "@/lib/files/put-file-server";
@@ -17,9 +17,7 @@ export type ConvertPayload = {
 export const convertFilesToPdfTask = task({
   id: "convert-files-to-pdf",
   retry: { maxAttempts: 3 },
-  queue: {
-    concurrencyLimit: 10,
-  },
+  queue: "file-conversion",
   run: async (payload: ConvertPayload) => {
     updateStatus({ progress: 0, text: "Initializing..." });
 
@@ -206,9 +204,7 @@ export const convertFilesToPdfTask = task({
 export const convertCadToPdfTask = task({
   id: "convert-cad-to-pdf",
   retry: { maxAttempts: 3 },
-  queue: {
-    concurrencyLimit: 2,
-  },
+  queue: "cad-conversion",
   run: async (payload: ConvertPayload) => {
     const team = await prisma.team.findUnique({
       where: {
