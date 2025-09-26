@@ -1,6 +1,7 @@
 import { type UIMessage } from "ai";
 
 import { cn } from "@/lib/utils";
+import { getMessageContent } from "@/lib/utils/message-utils";
 
 import AlertCircle from "../shared/icons/alert-circle";
 import PapermarkSparkle from "../shared/icons/papermark-sparkle";
@@ -48,7 +49,7 @@ export function ChatMessage({ message, ...props }: ChatMessageProps) {
             {mapMessageRole[message.role].name}
           </div>
           <div className="prose break-words font-light dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
-            <p className="mb-2 last:mb-0">{message.content}</p>
+            <p className="mb-2 last:mb-0">{getMessageContent(message)}</p>
           </div>
         </div>
         <ChatMessageActions className="group-hover:flex" message={message} />

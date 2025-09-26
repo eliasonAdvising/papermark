@@ -5,6 +5,7 @@ import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
+import { getMessageContent } from "@/lib/utils/message-utils";
 import { useCopyToClipboard } from "@/lib/utils/use-copy-to-clipboard";
 
 import Check from "../shared/icons/check";
@@ -23,7 +24,7 @@ export function ChatMessageActions({
 
   const onCopy = () => {
     if (isCopied) return;
-    copyToClipboard(message.content);
+    copyToClipboard(getMessageContent(message));
   };
 
   return (
