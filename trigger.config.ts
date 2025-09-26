@@ -24,5 +24,7 @@ export default defineConfig({
       }),
       ffmpeg(),
     ],
+    // Additional build configuration for npm ci compatibility
+    external: ["prisma", "@prisma/client"],
   },
 });
