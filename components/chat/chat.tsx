@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 import {
   type Message,
-  experimental_useAssistant as useAssistant,
-} from "ai/react";
+  useAssistant,
+} from "ai";
 import { nanoid } from "nanoid";
 
 import { BasePlan } from "@/lib/swr/use-billing";

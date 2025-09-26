@@ -1,5 +1,5 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { experimental_AssistantResponse } from "ai";
+import { AssistantResponse } from "ai";
 import { type MessageContentText } from "openai/resources/beta/threads/messages/messages";
 import { type Run } from "openai/resources/beta/threads/runs/runs";
 
@@ -101,7 +101,7 @@ export default async function POST(req: Request) {
     ? (process.env.OAI_PUBLIC_ASSISTANT_ID as string)
     : (process.env.OAI_ASSISTANT_ID as string);
 
-  return experimental_AssistantResponse(
+  return AssistantResponse(
     {
       threadId,
       messageId: createdMessage.id,
