@@ -32,19 +32,29 @@ const fetchPresignedUrl = async (
   headers: Record<string, string>,
   key: string,
 ): Promise<string> => {
+  console.log("Fetching presigned URL", { endpoint, headers: Object.keys(headers), key });
+
   const response = await fetch(endpoint, {
     method: "POST",
     headers,
     body: JSON.stringify({ key }),
   });
 
+  console.log("Presigned URL response", {
+    status: response.status,
+    statusText: response.statusText,
+    headers: Object.fromEntries(response.headers.entries())
+  });
+
   if (!response.ok) {
     const contentType = response.headers.get("content-type");
     let errorMessage: string;
+    let errorDetails: any;
 
     if (contentType && contentType.includes("application/json")) {
       try {
         const error = await response.json();
+        errorDetails = error;
         errorMessage =
           error.message || `Request failed with status ${response.status}`;
       } catch (parseError) {
@@ -57,6 +67,14 @@ const fetchPresignedUrl = async (
       errorMessage =
         textError || `Request failed with status ${response.status}`;
     }
+
+    console.error("Presigned URL error details", {
+      status: response.status,
+      errorMessage,
+      errorDetails,
+      endpoint,
+      key
+    });
 
     throw new Error(errorMessage);
   }

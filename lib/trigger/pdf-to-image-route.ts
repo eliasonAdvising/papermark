@@ -41,12 +41,37 @@ export const convertPdfToImageRoute = task({
     updateStatus({ progress: 10, text: "Retrieving file..." });
 
     // 2. get signed url from file
-    const signedUrl = await getFile({
-      type: documentVersion.storageType,
-      data: documentVersion.file,
+    logger.info("Attempting to get file", {
+      storageType: documentVersion.storageType,
+      fileData: documentVersion.file,
+      hasInternalApiKey: !!process.env.INTERNAL_API_KEY,
+      baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+      uploadTransport: process.env.NEXT_PUBLIC_UPLOAD_TRANSPORT,
+      hasS3Bucket: !!process.env.NEXT_PRIVATE_UPLOAD_BUCKET,
+      hasS3AccessKey: !!process.env.NEXT_PRIVATE_UPLOAD_ACCESS_KEY_ID,
+      hasS3SecretKey: !!process.env.NEXT_PRIVATE_UPLOAD_SECRET_ACCESS_KEY,
+      hasS3BucketUS: !!process.env.NEXT_PRIVATE_UPLOAD_BUCKET_US,
+      teamId
     });
 
-    logger.info("Retrieved signed url", { signedUrl });
+    let signedUrl;
+    try {
+      signedUrl = await getFile({
+        type: documentVersion.storageType,
+        data: documentVersion.file,
+      });
+
+      logger.info("Retrieved signed url", { signedUrl });
+    } catch (error) {
+      logger.error("Failed to get file with detailed error", {
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack : undefined,
+        storageType: documentVersion.storageType,
+        fileData: documentVersion.file,
+        teamId
+      });
+      throw error;
+    }
 
     if (!signedUrl) {
       logger.error("Failed to get signed url", { payload });

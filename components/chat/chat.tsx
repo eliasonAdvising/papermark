@@ -77,15 +77,15 @@ export function Chat({
           "You have reached your request limit for the day. Upgrade to a paid account to continue using Papermark Assistant.";
       }
 
-      const message: Message = {
+      const message: UIMessage = {
         role: "system",
         content: content,
-        id: nanoid(),
+        id: "system-message",
       };
 
       setCombinedMessages((prev) => [...prev, message]);
     }
-  }, [error]);
+  }, [error, isPublic, plan, userId]);
 
   useEffect(() => {
     // Concatenate existing messages with messages from the hook
