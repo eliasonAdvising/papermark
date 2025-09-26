@@ -1,7 +1,7 @@
 import { BasePlan } from "../swr/use-billing";
+import { getConversionQueueByPlan } from "../trigger/queues";
 
-// In v4, we just return the queue name since queues are pre-defined
-export const conversionQueue = (plan: string): string => {
-  const planName = plan.split("+")[0] as BasePlan;
-  return `conversion-${planName}`;
+// In v4, we return the actual queue object since queues are pre-defined
+export const conversionQueue = (plan: string) => {
+  return getConversionQueueByPlan(plan);
 };

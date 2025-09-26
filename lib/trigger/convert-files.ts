@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma";
 import { updateStatus } from "../utils/generate-trigger-status";
 import { getExtensionFromContentType } from "../utils/get-content-type";
 import { convertPdfToImageRoute } from "./pdf-to-image-route";
+import { conversionQueue, cadConversionQueue } from "./queues";
 
 export type ConvertPayload = {
   documentId: string;
@@ -17,7 +18,7 @@ export type ConvertPayload = {
 export const convertFilesToPdfTask = task({
   id: "convert-files-to-pdf",
   retry: { maxAttempts: 3 },
-  queue: "file-conversion",
+  queue: conversionQueue,
   run: async (payload: ConvertPayload) => {
     updateStatus({ progress: 0, text: "Initializing..." });
 
@@ -204,7 +205,7 @@ export const convertFilesToPdfTask = task({
 export const convertCadToPdfTask = task({
   id: "convert-cad-to-pdf",
   retry: { maxAttempts: 3 },
-  queue: "cad-conversion",
+  queue: cadConversionQueue,
   run: async (payload: ConvertPayload) => {
     const team = await prisma.team.findUnique({
       where: {
