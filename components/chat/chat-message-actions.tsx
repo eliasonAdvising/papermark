@@ -5,7 +5,6 @@ import { type UIMessage } from "ai";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
-import { getMessageContent } from "@/lib/utils/message-utils";
 import { useCopyToClipboard } from "@/lib/utils/use-copy-to-clipboard";
 
 import Check from "../shared/icons/check";
@@ -14,6 +13,21 @@ import Copy from "../shared/icons/copy";
 interface ChatMessageActionsProps extends React.ComponentProps<"div"> {
   message: UIMessage;
 }
+
+// Helper function to extract text content from UIMessage
+const getMessageContent = (message: UIMessage): string => {
+  if (typeof message.content === 'string') {
+    return message.content;
+  }
+  // In AI SDK v5, content can be an array of parts
+  if (Array.isArray(message.content)) {
+    return message.content
+      .filter((part: any) => part.type === 'text')
+      .map((part: any) => part.text)
+      .join(' ');
+  }
+  return '';
+};
 
 export function ChatMessageActions({
   message,

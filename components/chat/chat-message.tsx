@@ -1,7 +1,6 @@
 import { type UIMessage } from "ai";
 
 import { cn } from "@/lib/utils";
-import { getMessageContent } from "@/lib/utils/message-utils";
 
 import AlertCircle from "../shared/icons/alert-circle";
 import PapermarkSparkle from "../shared/icons/papermark-sparkle";
@@ -21,6 +20,21 @@ const mapMessageRole = {
 export interface ChatMessageProps {
   message: UIMessage;
 }
+
+// Helper function to extract text content from UIMessage
+const getMessageContent = (message: UIMessage): string => {
+  if (typeof message.content === 'string') {
+    return message.content;
+  }
+  // In AI SDK v5, content can be an array of parts
+  if (Array.isArray(message.content)) {
+    return message.content
+      .filter((part: any) => part.type === 'text')
+      .map((part: any) => part.text)
+      .join(' ');
+  }
+  return '';
+};
 
 export function ChatMessage({ message, ...props }: ChatMessageProps) {
   return (
