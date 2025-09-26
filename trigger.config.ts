@@ -6,6 +6,7 @@ export default defineConfig({
   project: "proj_hdqtvryaikkjgcubxlkh",
   dirs: ["./lib/trigger"],
   maxDuration: timeout.None, // no max duration
+  logLevel: "debug", // Add debug logging
   retries: {
     enabledInDev: false,
     default: {
