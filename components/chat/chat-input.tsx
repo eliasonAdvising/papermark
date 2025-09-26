@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { AssistantStatus, type Message } from "ai";
+import { type Message } from "ai";
 import Textarea from "react-textarea-autosize";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ export function ChatInput({
   submitMessage,
   messages,
 }: {
-  status: AssistantStatus;
+  status: "in_progress" | "awaiting_message";
   error: unknown;
   input: string;
   setInput: (input: string) => void;
