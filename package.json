@@ -155,6 +155,7 @@
     "@react-email/preview-server": "^4.2.8",
     "@tailwindcss/forms": "^0.5.10",
     "@trigger.dev/build": "4.0.4",
+    "@ai-sdk/react": "^1.0.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie": "^0.6.0",

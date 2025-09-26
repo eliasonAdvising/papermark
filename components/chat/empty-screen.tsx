@@ -2,8 +2,6 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 
-import Sparkle from "../shared/icons/sparkle";
-
 const exampleMessages = [
   {
     heading: "Summarize the document",

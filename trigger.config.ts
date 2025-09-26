@@ -25,6 +25,6 @@ export default defineConfig({
       ffmpeg(),
     ],
     // Additional build configuration for npm ci compatibility
-    external: ["prisma", "@prisma/client"],
+    external: ["prisma", "@prisma/client", "ai", "@ai-sdk/react"],
   },
 });

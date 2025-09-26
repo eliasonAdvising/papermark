@@ -2,14 +2,12 @@ import { NextRouter } from "next/router";
 
 import slugify from "@sindresorhus/slugify";
 import { upload } from "@vercel/blob/client";
-import { UIMessage } from "ai";
 import bcrypt from "bcryptjs";
 import * as chrono from "chrono-node";
 import { type ClassValue, clsx } from "clsx";
 import crypto from "crypto";
 import ms from "ms";
 import { customAlphabet } from "nanoid";
-import { ThreadMessage } from "openai/resources/beta/threads/messages/messages";
 import { rgb } from "pdf-lib";
 import { ParsedUrlQuery } from "querystring";
 import { toast } from "sonner";

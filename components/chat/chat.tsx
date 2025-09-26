@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  type UIMessage,
-  useChat,
-} from "ai";
-import { nanoid } from "nanoid";
+import { type UIMessage } from "ai";
+import { useChat } from " @ai-sdk/react";
 
 import { BasePlan } from "@/lib/swr/use-billing";
 import { cn } from "@/lib/utils";
+import { DefaultChatTransport } from "@/lib/utils/transport";
 
 import { ChatInput } from "./chat-input";
 import { ChatList } from "./chat-list";
@@ -34,23 +32,26 @@ export function Chat({
   userId,
   plan,
 }: ChatProps) {
+  const [input, setInput] = useState("");
+
   const {
     isLoading,
     messages: hookMessages,
-    input: hookInput,
-    setInput,
     handleInputChange,
     handleSubmit,
     error,
   } = useChat({
-    api: "/api/assistants/chat",
+    transport: DefaultChatTransport({
+      api: "/api/assistants/chat",
+      body: {
+        isPublic: isPublic,
+        userId: userId,
+        plan: plan,
+        threadId: threadId,
+      },
+    }),
     initialMessages,
-    body: {
-      isPublic: isPublic,
-      userId: userId,
-      plan: plan,
-      threadId: threadId,
-    },
+    sendAutomaticallyWhen: "toolFinished",
   });
 
   // Map isLoading to status for compatibility
@@ -122,7 +123,7 @@ export function Chat({
         status={status}
         error={error}
         messages={combinedMessages}
-        input={hookInput}
+        input={input}
         setInput={setInput}
         submitMessage={submitMessage}
         handleInputChange={handleInputChange}

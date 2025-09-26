@@ -14,19 +14,10 @@ interface ChatMessageActionsProps extends React.ComponentProps<"div"> {
   message: UIMessage;
 }
 
-// Helper function to extract text content from UIMessage
+// Helper function to extract text content from UIMessage in AI SDK v5
 const getMessageContent = (message: UIMessage): string => {
-  if (typeof message.content === 'string') {
-    return message.content;
-  }
-  // In AI SDK v5, content can be an array of parts
-  if (Array.isArray(message.content)) {
-    return message.content
-      .filter((part: any) => part.type === 'text')
-      .map((part: any) => part.text)
-      .join(' ');
-  }
-  return '';
+  // In AI SDK v5, message.content is always string for text content
+  return message.content;
 };
 
 export function ChatMessageActions({
