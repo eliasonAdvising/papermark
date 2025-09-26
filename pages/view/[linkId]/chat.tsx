@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { type Message } from "ai";
+import { type UIMessage } from "ai";
 import { getServerSession } from "next-auth";
 import { usePlausible } from "next-plausible";
 
@@ -116,7 +116,7 @@ export default function ChatPage({
   linkId,
 }: {
   threadId: string;
-  messages: Message[];
+  messages: UIMessage[];
   firstPage: string;
   userId: string;
   linkId: string;

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { type Message } from "ai";
+import { type UIMessage } from "ai";
 import Textarea from "react-textarea-autosize";
 
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export function ChatInput({
   setInput: (input: string) => void;
   handleInputChange: (e: any) => void;
   submitMessage: (e: any) => Promise<void>;
-  messages: Message[];
+  messages: UIMessage[];
 }) {
   const { formRef, onKeyDown } = useEnterSubmit();
   const inputRef = useRef<HTMLTextAreaElement>(null);

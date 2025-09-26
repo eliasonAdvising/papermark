@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 
 import {
-  type Message,
-  useAssistant,
+  type UIMessage,
+  useChat,
 } from "ai";
 import { nanoid } from "nanoid";
 
@@ -17,7 +17,7 @@ import { ChatScrollAnchor } from "./chat-scroll-anchor";
 import { EmptyScreen } from "./empty-screen";
 
 export interface ChatProps extends React.ComponentProps<"div"> {
-  initialMessages: Message[];
+  initialMessages: UIMessage[];
   threadId?: string;
   firstPage?: string;
   isPublic?: boolean;
@@ -35,23 +35,34 @@ export function Chat({
   plan,
 }: ChatProps) {
   const {
-    status,
+    isLoading,
     messages: hookMessages,
     input: hookInput,
-    submitMessage,
+    setInput,
     handleInputChange,
+    handleSubmit,
     error,
-  } = useAssistant({
+  } = useChat({
     api: "/api/assistants/chat",
-    threadId: threadId,
+    initialMessages,
     body: {
       isPublic: isPublic,
       userId: userId,
       plan: plan,
+      threadId: threadId,
     },
   });
 
-  const [combinedMessages, setCombinedMessages] = useState<Message[]>([]);
+  // Map isLoading to status for compatibility
+  const status = isLoading ? "in_progress" : "awaiting_message";
+
+  // Create submitMessage function to wrap handleSubmit for compatibility
+  const submitMessage = async (e: any) => {
+    e.preventDefault();
+    handleSubmit(e);
+  };
+
+  const [combinedMessages, setCombinedMessages] = useState<UIMessage[]>([]);
 
   useEffect(() => {
     if (error instanceof Error) {
@@ -82,14 +93,7 @@ export function Chat({
     setCombinedMessages([...reversedMessages, ...hookMessages]);
   }, [initialMessages, hookMessages]);
 
-  let isLoading;
-  if (status === "in_progress") {
-    isLoading = true;
-  } else if (status === "awaiting_message") {
-    isLoading = true;
-  }
-
-  const [_, setInput] = useState<string>(hookInput);
+  // isLoading is provided by useChat hook
 
   return (
     <>

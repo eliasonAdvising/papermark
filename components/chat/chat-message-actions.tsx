@@ -1,6 +1,6 @@
 "use client";
 
-import { type Message } from "ai";
+import { type UIMessage } from "ai";
 
 import { Button } from "@/components/ui/button";
 
@@ -11,7 +11,7 @@ import Check from "../shared/icons/check";
 import Copy from "../shared/icons/copy";
 
 interface ChatMessageActionsProps extends React.ComponentProps<"div"> {
-  message: Message;
+  message: UIMessage;
 }
 
 export function ChatMessageActions({

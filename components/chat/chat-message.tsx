@@ -1,4 +1,4 @@
-import { type Message } from "ai";
+import { type UIMessage } from "ai";
 
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ const mapMessageRole = {
 };
 
 export interface ChatMessageProps {
-  message: Message;
+  message: UIMessage;
 }
 
 export function ChatMessage({ message, ...props }: ChatMessageProps) {

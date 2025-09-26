@@ -1,4 +1,4 @@
-import { type Message } from "ai";
+import { type UIMessage } from "ai";
 
 import { Separator } from "@/components/ui/separator";
 
@@ -7,7 +7,7 @@ import PapermarkSparkle from "../shared/icons/papermark-sparkle";
 import { ChatMessage } from "./chat-message";
 
 export interface ChatList {
-  messages: Message[];
+  messages: UIMessage[];
   status: "in_progress" | "awaiting_message";
 }
 
