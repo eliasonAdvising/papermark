@@ -95,7 +95,14 @@ export function Chat({
     // Concatenate existing messages with messages from the hook
     // and reverse the order so that the newest messages are at the bottom:
     const reversedMessages = [...initialMessages].reverse();
-    setCombinedMessages([...reversedMessages, ...hookMessages]);
+    // Convert to compatible format and explicitly cast the type
+    const compatibleInitialMessages = reversedMessages
+      .filter(msg => msg.role === 'user' || msg.role === 'system' || msg.role === 'assistant')
+      .map(msg => ({
+        ...msg,
+        role: msg.role as 'user' | 'system' | 'assistant'
+      }));
+    setCombinedMessages([...compatibleInitialMessages, ...hookMessages]);
   }, [initialMessages, hookMessages]);
 
   // isLoading is provided by useChat hook
