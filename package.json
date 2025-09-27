@@ -20,6 +20,7 @@
     "dev:prisma": "npx prisma generate && npx prisma migrate deploy"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.38",
     "@aws-sdk/client-lambda": "^3.886.0",
     "@aws-sdk/client-s3": "^3.886.0",
     "@aws-sdk/cloudfront-signer": "^3.873.0",
@@ -155,10 +156,10 @@
     "schema": "prisma/schema/schema.prisma"
   },
   "devDependencies": {
+    "@ai-sdk/react": "^1.0.0",
     "@react-email/preview-server": "^4.2.8",
     "@tailwindcss/forms": "^0.5.10",
     "@trigger.dev/build": "4.0.4",
-    "@ai-sdk/react": "^1.0.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie": "^0.6.0",

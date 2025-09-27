@@ -1,5 +1,5 @@
 
-import { createClient } from ' @ai-sdk/provider';
+import { createClient } from '@ai-sdk/provider';
 import { createChatRequest } from 'ai';
 
 export function DefaultChatTransport(options) {

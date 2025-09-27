@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 
 import { type UIMessage } from "ai";
-import { useChat } from " @ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
 
 import { BasePlan } from "@/lib/swr/use-billing";
 import { cn } from "@/lib/utils";
-import { DefaultChatTransport } from "@/lib/utils/transport";
+// import { DefaultChatTransport } from "@/lib/utils/transport";
 
 import { ChatInput } from "./chat-input";
 import { ChatList } from "./chat-list";
@@ -41,17 +41,21 @@ export function Chat({
     handleSubmit,
     error,
   } = useChat({
-    transport: DefaultChatTransport({
-      api: "/api/assistants/chat",
-      body: {
-        isPublic: isPublic,
-        userId: userId,
-        plan: plan,
-        threadId: threadId,
-      },
-    }),
-    initialMessages,
-    sendAutomaticallyWhen: "toolFinished",
+    api: "/api/assistants/chat",
+    body: {
+      isPublic: isPublic,
+      userId: userId,
+      plan: plan,
+      threadId: threadId,
+    },
+    // Convert initialMessages to proper format or remove if incompatible
+    initialMessages: initialMessages?.map(msg => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.parts?.map(part =>
+        part.type === 'text' ? part.text : ''
+      ).join('') || '',
+    })),
   });
 
   // Map isLoading to status for compatibility
@@ -79,7 +83,7 @@ export function Chat({
 
       const message: UIMessage = {
         role: "system",
-        content: content,
+        parts: [{ type: "text", text: content }],
         id: "system-message",
       };
 

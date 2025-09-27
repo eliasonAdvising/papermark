@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { AssistantResponse } from "ai";
+import { streamText } from "ai";
+import { openai as aiOpenai } from "@ai-sdk/openai";
 import { type MessageContentText } from "openai/resources/beta/threads/messages/messages";
 import { type Run } from "openai/resources/beta/threads/runs/runs";
 
@@ -45,7 +46,7 @@ export default async function POST(req: Request) {
   // Parse the request body
   const input: {
     threadId: string | null;
-    message: string;
+    messages: Array<{ role: string; content: string; id?: string }>;
     isPublic: boolean | null;
     userId: string | null;
     plan: string | null;
@@ -90,10 +91,13 @@ export default async function POST(req: Request) {
   // create a threadId if one wasn't provided
   const threadId = input.threadId ?? (await openai.beta.threads.create()).id;
 
-  // Add a message to the thread
+  // Get the latest message from the input
+  const latestMessage = input.messages[input.messages.length - 1];
+
+  // Add the latest message to the OpenAI thread
   const createdMessage = await openai.beta.threads.messages.create(threadId, {
     role: "user",
-    content: input.message,
+    content: latestMessage.content,
   });
 
   // select the assistantId based on the isPublic flag
@@ -101,57 +105,64 @@ export default async function POST(req: Request) {
     ? (process.env.OAI_PUBLIC_ASSISTANT_ID as string)
     : (process.env.OAI_ASSISTANT_ID as string);
 
-  return AssistantResponse(
-    {
-      threadId,
-      messageId: createdMessage.id,
-    },
-    async ({ threadId, sendMessage }) => {
-      // Run the assistant on the thread
-      const run = await openai.beta.threads.runs.create(threadId, {
-        assistant_id: assistantId!,
-      });
+  // Run the assistant on the thread
+  const run = await openai.beta.threads.runs.create(threadId, {
+    assistant_id: assistantId!,
+  });
 
-      async function waitForRun(run: Run) {
-        // Poll for status change
-        while (run.status === "queued" || run.status === "in_progress") {
-          // delay for 500ms:
-          await new Promise((resolve) => setTimeout(resolve, 500));
+  async function waitForRun(run: Run) {
+    // Poll for status change
+    while (run.status === "queued" || run.status === "in_progress") {
+      // delay for 500ms:
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      run = await openai.beta.threads.runs.retrieve(threadId!, run.id);
+    }
 
-          run = await openai.beta.threads.runs.retrieve(threadId!, run.id);
-        }
+    // Check the run status
+    if (
+      run.status === "cancelled" ||
+      run.status === "cancelling" ||
+      run.status === "failed" ||
+      run.status === "expired"
+    ) {
+      throw new Error(run.status);
+    }
+  }
 
-        // Check the run status
-        if (
-          run.status === "cancelled" ||
-          run.status === "cancelling" ||
-          run.status === "failed" ||
-          run.status === "expired"
-        ) {
-          throw new Error(run.status);
-        }
-      }
+  await waitForRun(run);
 
-      await waitForRun(run);
+  // Get new thread messages (after our message)
+  const responseMessages = (
+    await openai.beta.threads.messages.list(threadId, {
+      after: createdMessage.id,
+      order: "asc",
+    })
+  ).data;
 
-      // Get new thread messages (after our message)
-      const responseMessages = (
-        await openai.beta.threads.messages.list(threadId, {
-          after: createdMessage.id,
-          order: "asc",
-        })
-      ).data;
+  // Convert OpenAI messages to AI SDK format
+  const aiMessages = responseMessages.map((message) => ({
+    id: message.id,
+    role: "assistant" as const,
+    content: message.content
+      .filter((content) => content.type === "text")
+      .map((content) => (content as MessageContentText).text.value)
+      .join(""),
+  }));
 
-      // Send the messages
-      for (const message of responseMessages) {
-        sendMessage({
-          id: message.id,
-          role: "assistant",
-          content: message.content.filter(
-            (content) => content.type === "text",
-          ) as Array<MessageContentText>,
-        });
-      }
-    },
-  );
+  // Convert messages to proper core message format
+  const messages = [
+    ...input.messages.map(msg => ({
+      role: msg.role as "user" | "assistant" | "system",
+      content: msg.content,
+    })),
+    ...aiMessages,
+  ];
+
+  // Use streamText to return the response
+  const result = streamText({
+    model: aiOpenai("gpt-4"),
+    messages: messages,
+  });
+
+  return result.toTextStreamResponse();
 }
