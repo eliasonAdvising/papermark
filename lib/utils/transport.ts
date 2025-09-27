@@ -1,4 +1,8 @@
+// This file is deprecated and not compatible with AI SDK v5
+// The DefaultChatTransport functionality has been removed from the AI SDK
+// Custom transports are no longer supported in AI SDK v5
 
+/*
 import { createClient } from '@ai-sdk/provider';
 import { createChatRequest } from 'ai';
 
@@ -35,3 +39,4 @@ export function DefaultChatTransport(options) {
     };
   };
 }
+*/

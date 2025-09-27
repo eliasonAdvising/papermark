@@ -12,6 +12,8 @@ import { rgb } from "pdf-lib";
 import { ParsedUrlQuery } from "querystring";
 import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
+import { type UIMessage } from "ai";
+import { type ThreadMessage } from "openai/resources/beta/threads/messages/messages";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -380,9 +382,9 @@ export const convertThreadMessagesToMessages = (
     return {
       id,
       createdAt: new Date(created_at * 1000), // converting Unix timestamp to Date object
-      content: messageContent[0],
+      parts: [{ type: "text", text: messageContent[0] || "" }],
       role: role === "assistant" ? "assistant" : "user", // Adjust according to your needs
-      // Set other properties as required by Message interface
+      // Set other properties as required by UIMessage interface
       ui: null, // example, set based on your UI requirements
       // name, function_call, and other fields as needed
     };
