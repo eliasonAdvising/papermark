@@ -16,130 +16,21 @@ import prisma from "@/lib/prisma";
 import { usePlan } from "@/lib/swr/use-billing";
 import { CustomUser } from "@/lib/types";
 
+// Simplified - just get the link ID from params, everything else happens client-side
 export const getServerSideProps = async (context: any) => {
-  try {
-    const { linkId } = context.params;
-    const session = await getServerSession(context.req, context.res, authOptions);
+  const { linkId } = context.params;
 
-    if (!session) {
-      return {
-        redirect: {
-          permanent: false,
-          destination: `/login?next=/view/${linkId}/chat`,
-        },
-      };
-    }
-
-  const link = await prisma.link.findUnique({
-    where: { id: linkId },
-    select: {
-      document: {
-        select: {
-          id: true,
-          assistantEnabled: true,
-          versions: {
-            where: { isPrimary: true },
-            select: {
-              pages: {
-                where: { pageNumber: 1 },
-                select: {
-                  file: true,
-                  storageType: true,
-                },
-              },
-            },
-          },
-        },
-      },
+  // Just pass the link ID, all authentication and data fetching happens client-side
+  return {
+    props: {
+      linkId,
     },
-  });
-
-  if (!link) {
-    return {
-      notFound: true,
-    };
-  }
-
-  if (!link.document!.assistantEnabled) {
-    return {
-      notFound: true,
-    };
-  }
-
-  const userId = (session.user as CustomUser).id;
-
-  // create or fetch threadId
-  let threadId = "";
-  let messages: UIMessage[] = [];
-
-  try {
-    const res = await fetch(
-      `${process.env.NEXTAUTH_URL}/api/assistants/threads`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          documentId: link!.document!.id,
-          userId: userId,
-        }),
-      },
-    );
-
-    if (res.ok) {
-      const data = await res.json();
-      threadId = data.threadId;
-      messages = data.messages || [];
-    }
-  } catch (error) {
-    console.error("Failed to fetch thread data:", error);
-    // Continue with empty values - the client will handle thread creation
-  }
-
-  let firstPage = "";
-  try {
-    firstPage = link.document!.versions[0].pages[0]
-      ? await getFile({
-          type: link.document!.versions[0].pages[0].storageType,
-          data: link.document!.versions[0].pages[0].file,
-        })
-      : "";
-  } catch (error) {
-    console.error("Failed to get first page:", error);
-    // Continue with empty string - the page will work without the first page preview
-    firstPage = "";
-  }
-
-    return {
-      props: {
-        threadId,
-        messages: messages || [],
-        firstPage,
-        userId: userId,
-        linkId: linkId,
-      },
-    };
-  } catch (error) {
-    console.error("Error in getServerSideProps:", error);
-    // Return a fallback page or redirect on error
-    return {
-      notFound: true,
-    };
-  }
+  };
 };
 
 export default function ChatPage({
-  threadId,
-  messages,
-  firstPage,
-  userId,
   linkId,
 }: {
-  threadId: string;
-  messages: UIMessage[];
-  firstPage: string;
-  userId: string;
   linkId: string;
 }) {
   const { plan } = usePlan();
@@ -147,16 +38,17 @@ export default function ChatPage({
 
   useEffect(() => {
     plausible("assistantViewedFromLink", { props: { linkId: linkId } });
-  }, []);
+  }, [linkId, plausible]);
 
+  // All data will be fetched client-side by the Chat component
   return (
     <>
       <Nav linkId={linkId} />
       <Chat
-        initialMessages={messages}
-        threadId={threadId}
-        firstPage={firstPage}
-        userId={userId}
+        initialMessages={[]}
+        threadId=""
+        firstPage=""
+        userId=""
         plan={plan}
       />
     </>
