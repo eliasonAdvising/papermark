@@ -68,27 +68,33 @@ export const getServerSideProps = async (context: any) => {
   }
 
   // create or fetch threadId
-  const res = await fetch(
-    `${process.env.NEXTAUTH_URL}/api/assistants/threads`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  let threadId = "";
+  let messages: UIMessage[] = [];
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXTAUTH_URL}/api/assistants/threads`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          userId: userId,
+        }),
       },
-      body: JSON.stringify({
-        documentId: document.id,
-        userId: userId,
-      }),
-    },
-  );
+    );
 
-  if (!res.ok) {
-    return {
-      notFound: true,
-    };
+    if (res.ok) {
+      const data = await res.json();
+      threadId = data.threadId;
+      messages = data.messages || [];
+    }
+  } catch (error) {
+    console.error("Failed to fetch thread data:", error);
+    // Continue with empty values - the client will handle thread creation
   }
-
-  const { threadId, messages } = await res.json();
 
   const firstPage = document.versions[0].pages[0]
     ? await getFile({
