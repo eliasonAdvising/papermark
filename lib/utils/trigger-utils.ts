@@ -1,7 +1,8 @@
 import { BasePlan } from "../swr/use-billing";
 import { getConversionQueueByPlan } from "../trigger/queues";
 
-// In v4, we return the actual queue object since queues are pre-defined
+// In v4, we return the queue name since triggers expect string for queue parameter
 export const conversionQueue = (plan: string) => {
-  return getConversionQueueByPlan(plan);
+  const queue = getConversionQueueByPlan(plan);
+  return queue.name;
 };
