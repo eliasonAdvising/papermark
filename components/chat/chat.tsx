@@ -67,7 +67,7 @@ export function Chat({
     handleSubmit(e);
   };
 
-  const [combinedMessages, setCombinedMessages] = useState<UIMessage[]>([]);
+  const [combinedMessages, setCombinedMessages] = useState<any[]>([]);
 
   useEffect(() => {
     if (error instanceof Error) {
@@ -95,13 +95,10 @@ export function Chat({
     // Concatenate existing messages with messages from the hook
     // and reverse the order so that the newest messages are at the bottom:
     const reversedMessages = [...initialMessages].reverse();
-    // Convert to compatible format and explicitly cast the type
+    // Filter and convert to compatible format using type assertion
     const compatibleInitialMessages = reversedMessages
       .filter(msg => msg.role === 'user' || msg.role === 'system' || msg.role === 'assistant')
-      .map(msg => ({
-        ...msg,
-        role: msg.role as 'user' | 'system' | 'assistant'
-      }));
+      .map(msg => msg as typeof hookMessages[0]);
     setCombinedMessages([...compatibleInitialMessages, ...hookMessages]);
   }, [initialMessages, hookMessages]);
 
