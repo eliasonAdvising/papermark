@@ -17,55 +17,56 @@ import { usePlan } from "@/lib/swr/use-billing";
 import { CustomUser } from "@/lib/types";
 
 export const getServerSideProps = async (context: any) => {
-  const { id } = context.params;
-  const session = await getServerSession(context.req, context.res, authOptions);
+  try {
+    const { id } = context.params;
+    const session = await getServerSession(context.req, context.res, authOptions);
 
-  if (!session) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: `/login?next=/documents/${id}/chat`,
-      },
-    };
-  }
-
-  const userId = (session.user as CustomUser).id;
-
-  const document = await prisma.document.findUnique({
-    where: {
-      id,
-      assistantEnabled: true,
-      team: {
-        users: {
-          some: {
-            userId: userId,
-          },
+    if (!session) {
+      return {
+        redirect: {
+          permanent: false,
+          destination: `/login?next=/documents/${id}/chat`,
         },
-      },
-    },
-    select: {
-      id: true,
-      assistantEnabled: true,
-      versions: {
-        where: { isPrimary: true },
-        select: {
-          pages: {
-            where: { pageNumber: 1 },
-            select: {
-              file: true,
-              storageType: true,
+      };
+    }
+
+    const userId = (session.user as CustomUser).id;
+
+    const document = await prisma.document.findUnique({
+      where: {
+        id,
+        assistantEnabled: true,
+        team: {
+          users: {
+            some: {
+              userId: userId,
             },
           },
         },
       },
-    },
-  });
+      select: {
+        id: true,
+        assistantEnabled: true,
+        versions: {
+          where: { isPrimary: true },
+          select: {
+            pages: {
+              where: { pageNumber: 1 },
+              select: {
+                file: true,
+                storageType: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
-  if (!document) {
-    return {
-      notFound: true,
-    };
-  }
+    if (!document) {
+      return {
+        notFound: true,
+      };
+    }
 
   // create or fetch threadId
   let threadId = "";
@@ -96,22 +97,36 @@ export const getServerSideProps = async (context: any) => {
     // Continue with empty values - the client will handle thread creation
   }
 
-  const firstPage = document.versions[0].pages[0]
-    ? await getFile({
-        type: document.versions[0].pages[0].storageType,
-        data: document.versions[0].pages[0].file,
-      })
-    : "";
+  let firstPage = "";
+  try {
+    firstPage = document.versions[0].pages[0]
+      ? await getFile({
+          type: document.versions[0].pages[0].storageType,
+          data: document.versions[0].pages[0].file,
+        })
+      : "";
+  } catch (error) {
+    console.error("Failed to get first page:", error);
+    // Continue with empty string - the page will work without the first page preview
+    firstPage = "";
+  }
 
-  return {
-    props: {
-      threadId,
-      messages: messages || [],
-      firstPage,
-      userId,
-      documentId: document.id,
-    },
-  };
+    return {
+      props: {
+        threadId,
+        messages: messages || [],
+        firstPage,
+        userId,
+        documentId: document.id,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getServerSideProps:", error);
+    // Return a fallback page or redirect on error
+    return {
+      notFound: true,
+    };
+  }
 };
 
 export default function ChatPage({

@@ -17,17 +17,18 @@ import { usePlan } from "@/lib/swr/use-billing";
 import { CustomUser } from "@/lib/types";
 
 export const getServerSideProps = async (context: any) => {
-  const { linkId } = context.params;
-  const session = await getServerSession(context.req, context.res, authOptions);
+  try {
+    const { linkId } = context.params;
+    const session = await getServerSession(context.req, context.res, authOptions);
 
-  if (!session) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: `/login?next=/view/${linkId}/chat`,
-      },
-    };
-  }
+    if (!session) {
+      return {
+        redirect: {
+          permanent: false,
+          destination: `/login?next=/view/${linkId}/chat`,
+        },
+      };
+    }
 
   const link = await prisma.link.findUnique({
     where: { id: linkId },
@@ -68,44 +69,64 @@ export const getServerSideProps = async (context: any) => {
   const userId = (session.user as CustomUser).id;
 
   // create or fetch threadId
-  const res = await fetch(
-    `${process.env.NEXTAUTH_URL}/api/assistants/threads`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        documentId: link!.document!.id,
-        userId: userId,
-      }),
-    },
-  );
+  let threadId = "";
+  let messages: UIMessage[] = [];
 
-  if (!res.ok) {
+  try {
+    const res = await fetch(
+      `${process.env.NEXTAUTH_URL}/api/assistants/threads`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId: link!.document!.id,
+          userId: userId,
+        }),
+      },
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      threadId = data.threadId;
+      messages = data.messages || [];
+    }
+  } catch (error) {
+    console.error("Failed to fetch thread data:", error);
+    // Continue with empty values - the client will handle thread creation
+  }
+
+  let firstPage = "";
+  try {
+    firstPage = link.document!.versions[0].pages[0]
+      ? await getFile({
+          type: link.document!.versions[0].pages[0].storageType,
+          data: link.document!.versions[0].pages[0].file,
+        })
+      : "";
+  } catch (error) {
+    console.error("Failed to get first page:", error);
+    // Continue with empty string - the page will work without the first page preview
+    firstPage = "";
+  }
+
+    return {
+      props: {
+        threadId,
+        messages: messages || [],
+        firstPage,
+        userId: userId,
+        linkId: linkId,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getServerSideProps:", error);
+    // Return a fallback page or redirect on error
     return {
       notFound: true,
     };
   }
-
-  const { threadId, messages } = await res.json();
-
-  const firstPage = link.document!.versions[0].pages[0]
-    ? await getFile({
-        type: link.document!.versions[0].pages[0].storageType,
-        data: link.document!.versions[0].pages[0].file,
-      })
-    : "";
-
-  return {
-    props: {
-      threadId,
-      messages: messages || [],
-      firstPage,
-      userId: userId,
-      linkId: linkId,
-    },
-  };
 };
 
 export default function ChatPage({
