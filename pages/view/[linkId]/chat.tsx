@@ -2,19 +2,13 @@ import Link from "next/link";
 
 import { useEffect } from "react";
 
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import { type UIMessage } from "ai";
-import { getServerSession } from "next-auth";
 import { usePlausible } from "next-plausible";
 
 import { Chat } from "@/components/chat/chat";
 import Sparkle from "@/components/shared/icons/sparkle";
 import { Button } from "@/components/ui/button";
 
-import { getFile } from "@/lib/files/get-file";
-import prisma from "@/lib/prisma";
 import { usePlan } from "@/lib/swr/use-billing";
-import { CustomUser } from "@/lib/types";
 
 // Simplified - just get the link ID from params, everything else happens client-side
 export const getServerSideProps = async (context: any) => {
